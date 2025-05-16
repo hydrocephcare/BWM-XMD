@@ -5,110 +5,91 @@ import Image from "next/image"
 import { useInView } from "framer-motion"
 import { motion } from "framer-motion"
 import { CheckCircle } from "lucide-react"
-import { ImageUploader } from "@/components/image-uploader"
 
 export function AboutSection() {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, amount: 0.3 })
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [aboutImage, setAboutImage] = useState("/placeholder.svg?height=800&width=600")
+  const isInView = useInView(ref, { once: true, amount: 0.2 })
+  const [zeroPlagiarismImage, setZeroPlagiarismImage] = useState("/placeholder.svg?height=600&width=800")
 
   useEffect(() => {
-    // Check if user is admin - in a real app, this would be based on authentication
-    // For demo purposes, we'll add a simple query param check
-    const isAdminMode = new URLSearchParams(window.location.search).get("admin") === "true"
-    setIsAdmin(isAdminMode)
+    // Load saved images from localStorage
+    try {
+      const savedImages = localStorage.getItem("victory-school-home-images")
+      if (savedImages) {
+        const images = JSON.parse(savedImages)
+        if (images.zeroPlagiarism) {
+          setZeroPlagiarismImage(images.zeroPlagiarism)
+        }
+      }
+    } catch (error) {
+      console.error("Error loading zero plagiarism image:", error)
+    }
   }, [])
 
   return (
-    <section id="about" className="py-16 md:py-24 bg-white">
+    <section ref={ref} className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4">
-        <div ref={ref} className="grid gap-8 md:grid-cols-2 md:gap-12 items-center">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-navy-800 mb-4">Why Choose Us?</h2>
+          <p className="text-gray-600">
+            We provide high-quality, original project materials that help students excel in their KCSE Computer Studies
+            examination.
+          </p>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2 md:gap-12 items-center">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="relative"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col space-y-6"
           >
-            {isAdmin ? (
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">About Section Image</h3>
-                <ImageUploader
-                  initialImage={aboutImage}
-                  onImageChange={setAboutImage}
-                  aspectRatio="portrait"
-                  buttonText="Upload About Image"
-                />
-              </div>
-            ) : (
-              <div className="relative h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-lg">
-                <Image
-                  src={aboutImage || "/placeholder.svg"}
-                  alt="Students collaborating on a computer studies project, demonstrating teamwork and technical skills in a classroom environment"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
-            <div className="absolute -bottom-6 -right-6 bg-navy-600 rounded-lg shadow-lg p-6 text-white max-w-[200px]">
-              <h3 className="text-lg font-bold mb-2">Zero Plagiarism</h3>
-              <p className="text-sm text-white/90">Each project is uniquely crafted for KCSE 2025</p>
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                <CheckCircle className="h-6 w-6 text-gold-500 mr-2" />
+                Zero Plagiarism
+              </h3>
+              <p className="text-gray-600">
+                All our projects are 100% original and uniquely crafted for each student. We understand the importance
+                of original work in academic assessment and ensure that every project meets this high standard.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                <CheckCircle className="h-6 w-6 text-gold-500 mr-2" />
+                Complete Documentation
+              </h3>
+              <p className="text-gray-600">
+                Our projects come with comprehensive documentation including system analysis, design, implementation
+                details, and user manuals. This thorough approach ensures you understand every aspect of your project.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-navy-800 mb-4 flex items-center">
+                <CheckCircle className="h-6 w-6 text-gold-500 mr-2" />
+                KCSE Syllabus Aligned
+              </h3>
+              <p className="text-gray-600">
+                All our projects are designed to meet the specific requirements of the KCSE Computer Studies syllabus.
+                This alignment ensures that your project will satisfy all examination criteria.
+              </p>
             </div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-col space-y-6"
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-navy-800 mb-4">
-                Victory School Club Membership System
-              </h2>
-              <p className="text-gray-600">
-                Achieving excellent scores in the KCSE and turning your aspirations into reality marks the crucial first
-                step toward shaping a bright and successful future. KCSE projects serve as an essential component in
-                this journey, offering students an opportunity to apply their knowledge, explore their creativity, and
-                demonstrate their understanding of key concepts.
-              </p>
-              <p className="text-gray-600 mt-4">
-                The Victory School Club Membership System is designed to facilitate student registration, track
-                membership payments, organize club activities, and generate financial reports. The system enhances
-                transparency and streamlines the administration of co-curricular activities, promoting student
-                engagement and effective management.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-gold-500 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm font-semibold text-navy-700">Free Past Projects</h3>
-                  <p className="text-xs text-gray-500">Access to previous examples</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-gold-500 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm font-semibold text-navy-700">Zero Plagiarism</h3>
-                  <p className="text-xs text-gray-500">Original work guaranteed</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-gold-500 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm font-semibold text-navy-700">Affordable Pricing</h3>
-                  <p className="text-xs text-gray-500">Student-friendly rates</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-gold-500 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm font-semibold text-navy-700">24/7 Support</h3>
-                  <p className="text-xs text-gray-500">Always available to help</p>
-                </div>
-              </div>
+            <div className="relative h-[400px] md:h-[500px] rounded-xl overflow-hidden shadow-lg">
+              <Image
+                src={zeroPlagiarismImage || "/placeholder.svg"}
+                alt="Student receiving personalized project guidance from a teacher, with original code visible on computer screens"
+                fill
+                className="object-cover"
+              />
             </div>
           </motion.div>
         </div>

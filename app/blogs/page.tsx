@@ -1,75 +1,30 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { BlogCard } from "@/components/blog-card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
-
-// Mock blog data - in a real app, this would come from your database
-const mockBlogs = [
-  {
-    id: "1",
-    title: "How to Prepare for KCSE Computer Studies",
-    slug: "how-to-prepare-for-kcse-computer-studies",
-    excerpt: "Essential tips and strategies to excel in your KCSE Computer Studies examination.",
-    coverImage: "/placeholder.svg?height=600&width=1200",
-    publishedAt: new Date().toISOString(),
-    author: "John Doe",
-    readTime: "5 min read",
-  },
-  {
-    id: "2",
-    title: "Understanding Database Design for KCSE Projects",
-    slug: "understanding-database-design-for-kcse-projects",
-    excerpt: "A comprehensive guide to designing efficient databases for your KCSE Computer Studies project.",
-    coverImage: "/placeholder.svg?height=600&width=1200",
-    publishedAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-    author: "Jane Smith",
-    readTime: "8 min read",
-  },
-  {
-    id: "3",
-    title: "Top 10 Programming Tips for Beginners",
-    slug: "top-10-programming-tips-for-beginners",
-    excerpt: "Essential programming tips for students just starting their journey in computer studies.",
-    coverImage: "/placeholder.svg?height=600&width=1200",
-    publishedAt: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago
-    author: "David Kamau",
-    readTime: "6 min read",
-  },
-  {
-    id: "4",
-    title: "The Importance of Documentation in KCSE Projects",
-    slug: "importance-of-documentation-in-kcse-projects",
-    excerpt: "Learn why proper documentation is crucial for scoring high marks in your KCSE Computer Studies project.",
-    coverImage: "/placeholder.svg?height=600&width=1200",
-    publishedAt: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 days ago
-    author: "Sarah Wanjiku",
-    readTime: "4 min read",
-  },
-  {
-    id: "5",
-    title: "How to Create Effective User Interfaces for Your Project",
-    slug: "how-to-create-effective-user-interfaces",
-    excerpt: "Design principles and best practices for creating user-friendly interfaces in your KCSE project.",
-    coverImage: "/placeholder.svg?height=600&width=1200",
-    publishedAt: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 days ago
-    author: "John Doe",
-    readTime: "7 min read",
-  },
-  {
-    id: "6",
-    title: "Common Mistakes to Avoid in KCSE Computer Studies Projects",
-    slug: "common-mistakes-to-avoid-in-kcse-projects",
-    excerpt: "Learn about the pitfalls that many students encounter and how to avoid them in your project.",
-    coverImage: "/placeholder.svg?height=600&width=1200",
-    publishedAt: new Date(Date.now() - 86400000 * 14).toISOString(), // 14 days ago
-    author: "Jane Smith",
-    readTime: "5 min read",
-  },
-]
+import { Search, BookOpen } from "lucide-react"
 
 export default function BlogsPage() {
+  const [blogPosts, setBlogPosts] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Load blog posts from localStorage
+    try {
+      const savedPosts = localStorage.getItem("victory-school-blog-posts")
+      if (savedPosts) {
+        setBlogPosts(JSON.parse(savedPosts))
+      }
+    } catch (error) {
+      console.error("Error loading blog posts:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -96,26 +51,28 @@ export default function BlogsPage() {
         {/* Blog Listing */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockBlogs.map((blog) => (
-                <BlogCard key={blog.id} {...blog} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="mt-12 flex justify-center">
-              <div className="flex gap-2">
-                <Button variant="outline" disabled>
-                  Previous
-                </Button>
-                <Button variant="outline" className="bg-primary text-primary-foreground">
-                  1
-                </Button>
-                <Button variant="outline">2</Button>
-                <Button variant="outline">3</Button>
-                <Button variant="outline">Next</Button>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-[400px] bg-muted animate-pulse rounded-lg"></div>
+                ))}
               </div>
-            </div>
+            ) : blogPosts.length === 0 ? (
+              <div className="text-center py-20">
+                <BookOpen className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-2xl font-bold mb-4">No Blog Posts Yet</h2>
+                <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                  We're working on creating valuable content for you. Check back soon for articles about KCSE Computer
+                  Studies projects.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {blogPosts.map((blog) => (
+                  <BlogCard key={blog.id} {...blog} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>

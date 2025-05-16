@@ -9,28 +9,31 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function EditBlogPost({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true)
   const [blogData, setBlogData] = useState<any>(null)
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
-    // In a real app, you would fetch the blog post data from your API
-    // For now, we'll simulate loading data
+    // Load blog posts from localStorage
     const fetchBlogPost = async () => {
       try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 500))
 
-        // Mock data
-        setBlogData({
-          id: params.id,
-          title: "How to Prepare for KCSE Computer Studies",
-          slug: "how-to-prepare-for-kcse-computer-studies",
-          excerpt: "Essential tips and strategies to excel in your KCSE Computer Studies examination.",
-          content:
-            "<p>This is a sample blog post content. In a real application, this would be loaded from your database.</p><h2>Study Tips</h2><p>Here are some study tips for KCSE Computer Studies:</p><ul><li>Practice coding regularly</li><li>Understand database concepts thoroughly</li><li>Review past papers</li></ul>",
-          coverImage: "/placeholder.svg?height=600&width=1200",
-          publishedAt: new Date().toISOString(),
-        })
+        const savedPosts = localStorage.getItem("victory-school-blog-posts")
+        if (savedPosts) {
+          const posts = JSON.parse(savedPosts)
+          const post = posts.find((p: any) => p.id === params.id)
+
+          if (post) {
+            setBlogData(post)
+          } else {
+            setNotFound(true)
+          }
+        } else {
+          setNotFound(true)
+        }
       } catch (error) {
         console.error("Error fetching blog post:", error)
+        setNotFound(true)
       } finally {
         setIsLoading(false)
       }
@@ -38,6 +41,21 @@ export default function EditBlogPost({ params }: { params: { id: string } }) {
 
     fetchBlogPost()
   }, [params.id])
+
+  if (notFound) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">Blog Post Not Found</h1>
+            <p>The blog post you're trying to edit doesn't exist or has been deleted.</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col">

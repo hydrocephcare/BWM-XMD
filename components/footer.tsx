@@ -1,106 +1,107 @@
 import Link from "next/link"
-import { GraduationCap, Phone, Mail, MapPin } from "lucide-react"
+import { Facebook, Twitter, Instagram, Youtube } from "lucide-react"
 
 export function Footer() {
   return (
-    <footer className="bg-navy-800 text-white dark:bg-navy-900">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+    <footer className="bg-navy-900 text-white pt-12 pb-6">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <GraduationCap className="h-6 w-6 text-gold-500" />
-              <span className="text-xl font-bold">VICTORY SCHOOL</span>
-            </div>
-            <p className="text-white/70 text-sm">
-              Victory School Club Membership System Project is this year's Project. Aim at the best and get the best.
-              Good luck in your Exams.
+            <h3 className="text-xl font-bold mb-4">Victory School Club</h3>
+            <p className="text-gray-300 mb-4">
+              Empowering KCSE students with comprehensive project solutions for Computer Studies.
             </p>
+            <div className="flex space-x-4">
+              <Link href="https://facebook.com" className="text-gray-300 hover:text-white transition-colors">
+                <Facebook className="h-5 w-5" />
+                <span className="sr-only">Facebook</span>
+              </Link>
+              <Link href="https://twitter.com" className="text-gray-300 hover:text-white transition-colors">
+                <Twitter className="h-5 w-5" />
+                <span className="sr-only">Twitter</span>
+              </Link>
+              <Link href="https://instagram.com" className="text-gray-300 hover:text-white transition-colors">
+                <Instagram className="h-5 w-5" />
+                <span className="sr-only">Instagram</span>
+              </Link>
+              <Link href="https://youtube.com" className="text-gray-300 hover:text-white transition-colors">
+                <Youtube className="h-5 w-5" />
+                <span className="sr-only">YouTube</span>
+              </Link>
+            </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-xl font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="#download" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
-                  Download Project
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
+                  Home
                 </Link>
               </li>
               <li>
-                <Link href="#guides" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
-                  Download from AI
-                </Link>
-              </li>
-              <li>
-                <Link href="#services" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
-                  KCSE Grade Boost
-                </Link>
-              </li>
-              <li>
-                <Link href="#contact" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
-                  Contact Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/about" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
+                <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
-                  Send Feedback
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-white/70 hover:text-gold-500 transition-colors text-sm">
+                <Link href="/blogs" className="text-gray-300 hover:text-white transition-colors">
                   Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
+                  Contact
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-white/70 text-sm">
-                <MapPin className="h-4 w-4 text-gold-500" />
-                Nairobi, Kenya
+            <h3 className="text-xl font-bold mb-4">Resources</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="https://youtu.be/Rhp84_oP6bU"
+                  className="text-gray-300 hover:text-white transition-colors"
+                  target="_blank"
+                >
+                  Video Tutorials
+                </Link>
               </li>
-              <li className="flex items-center gap-2 text-white/70 text-sm">
-                <Phone className="h-4 w-4 text-gold-500" />
-                (254) 115-475-543
+              <li>
+                <Link
+                  href="https://victoryschoolclub.co.ke/wp-content/uploads/2025/05/GUIDELINE-FOR-VICTORY-SCHOOL-CLUB-MEMBERSHIP-SYSTEM.pdf"
+                  className="text-gray-300 hover:text-white transition-colors"
+                  target="_blank"
+                >
+                  Student Guidelines
+                </Link>
               </li>
-              <li className="flex items-center gap-2 text-white/70 text-sm">
-                <Mail className="h-4 w-4 text-gold-500" />
-                admin@victoryschoolclub.co.ke
+              <li>
+                <Link
+                  href="https://victoryschoolclub.co.ke/wp-content/uploads/2025/05/Victory-School-Club-Membership-System-Question-Paper.pdf"
+                  className="text-gray-300 hover:text-white transition-colors"
+                  target="_blank"
+                >
+                  Sample Papers
+                </Link>
               </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-bold mb-4">Contact</h3>
+            <ul className="space-y-2">
+              <li className="text-gray-300">Phone: (254) 115-475-543</li>
+              <li className="text-gray-300">Email: info@victoryschoolclub.co.ke</li>
+              <li className="text-gray-300">Nairobi, Kenya</li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-white/10 text-center text-white/70 text-sm">
-          <p>Copyright © {new Date().getFullYear()} KCSE Projects. For Educational Use Only. All rights reserved.</p>
-          <div className="flex justify-center gap-6 mt-4">
-            <Link href="#" className="hover:text-gold-500 transition-colors">
-              Terms Of Service
-            </Link>
-            <Link href="#" className="hover:text-gold-500 transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="#" className="hover:text-gold-500 transition-colors">
-              Legal
-            </Link>
-          </div>
+        <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400 text-sm">
+          <p>&copy; {new Date().getFullYear()} Victory School Club. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -4,23 +4,29 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Download, BookOpen, GraduationCap } from "lucide-react"
+import { Download, GraduationCap } from "lucide-react"
 import { motion } from "framer-motion"
 import { CountdownTimer } from "@/components/countdown-timer"
-import { ImageUploader } from "@/components/image-uploader"
 
 export function HeroSection() {
   const [isMounted, setIsMounted] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
   const [heroImage, setHeroImage] = useState("/placeholder.svg?height=800&width=600")
 
   useEffect(() => {
     setIsMounted(true)
 
-    // Check if user is admin - in a real app, this would be based on authentication
-    // For demo purposes, we'll add a simple query param check
-    const isAdminMode = new URLSearchParams(window.location.search).get("admin") === "true"
-    setIsAdmin(isAdminMode)
+    // Load saved images from localStorage
+    try {
+      const savedImages = localStorage.getItem("victory-school-home-images")
+      if (savedImages) {
+        const images = JSON.parse(savedImages)
+        if (images.hero) {
+          setHeroImage(images.hero)
+        }
+      }
+    } catch (error) {
+      console.error("Error loading hero image:", error)
+    }
   }, [])
 
   if (!isMounted) {
@@ -65,12 +71,7 @@ export function HeroSection() {
                   <Download className="ml-2 h-4 w-4 transition-transform group-hover:translate-y-1" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-navy-600 text-navy-600 hover:bg-navy-50">
-                <Link href="#guides">
-                  View Guide
-                  <BookOpen className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              {/* Removed View Guidelines button as requested */}
             </div>
           </motion.div>
 
@@ -80,27 +81,15 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="relative"
           >
-            {isAdmin ? (
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Hero Image</h3>
-                <ImageUploader
-                  initialImage={heroImage}
-                  onImageChange={setHeroImage}
-                  aspectRatio="portrait"
-                  buttonText="Upload Hero Image"
-                />
-              </div>
-            ) : (
-              <div className="relative h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-2xl">
-                <Image
-                  src={heroImage || "/placeholder.svg"}
-                  alt="Student using the Victory School Club Membership System on a computer, showcasing the user interface and database functionality"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            )}
+            <div className="relative h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-2xl">
+              <Image
+                src={heroImage || "/placeholder.svg"}
+                alt="Student using the Victory School Club Membership System on a computer, showcasing the user interface and database functionality"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
             <div className="absolute -bottom-6 -left-6 bg-white rounded-lg shadow-lg p-4 border border-gray-100">
               <CountdownTimer targetDate="2025-07-31T00:00:00" />
             </div>

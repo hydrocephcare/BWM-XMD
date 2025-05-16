@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Victory School - Image Upload</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      color: #333;
+    }
+    h1 {
+      margin-bottom: 1.5rem;
+      color: #1e4370;
+    }
+    .upload-container {
+      border: 2px dashed #ccc;
+      padding: 2rem;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+    }
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #ccc;
+    }
+    .btn {
+      background-color: #1e4370;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .btn:hover {
+      background-color: #0d2b53;
+    }
+    .btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .results {
+      margin-top: 2rem;
+    }
+    .image-result {
+      border: 1px solid #eee;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+    }
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      margin-bottom: 1rem;
+    }
+    .image-url {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .copy-btn {
+      background-color: #f0f4f9;
+      color: #1e4370;
+      border: 1px solid #1e4370;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .copy-btn:hover {
+      background-color: #d0dce9;
+    }
+    .loading {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Victory School - Image Upload</h1>
+  
+  <div class="upload-container">
+    <div class="upload-icon">📷</div>
+    <p>Drag and drop your image here, or click the button below</p>
+    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    <button class="btn" id="uploadBtn">Select Image</button>
+  </div>
+  
+  <div id="results" class="results"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('fileInput');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const resultsContainer = document.getElementById('results');
+      const uploadContainer = document.querySelector('.upload-container');
+      
+      // Handle button click
+      uploadBtn.addEventListener('click', function() {
+        fileInput.click();
+      });
+      
+      // Handle file selection
+      fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+          uploadFile(fileInput.files[0]);
+        }
+      });
+      
+      // Handle drag and drop
+      uploadContainer.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadContainer.style.borderColor = '#1e4370';
+      });
+      
+      uploadContainer.addEventListener('dragleave', function() {
+        uploadContainer.style.borderColor = '#ccc';
+      });
+      
+      uploadContainer.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadContainer.style.borderColor = '#ccc';
+        
+        if (e.dataTransfer.files.length > 0) {
+          uploadFile(e.dataTransfer.files[0]);
+        }
+      });
+      
+      // Upload file function
+      function uploadFile(file) {
+        if (!file.type.startsWith('image/')) {
+          alert('Please select an image file.');
+          return;
+        }
+        
+        // Disable button and show loading state
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<span class="loading"></span>Uploading...';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Upload failed');
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Create result element
+          const resultElement = document.createElement('div');
+          resultElement.className = 'image-result';
+          
+          // Add image preview
+          const img = document.createElement('img');
+          img.src = data.url;
+          img.alt = 'Uploaded image';
+          img.className = 'image-preview';
+          resultElement.appendChild(img);
+          
+          // Add URL input
+          const urlInput = document.createElement('input');
+          urlInput.type = 'text';
+          urlInput.value = data.url;
+          urlInput.readOnly = true;
+          urlInput.className = 'image-url';
+          resultElement.appendChild(urlInput);
+          
+          // Add copy button
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'copy-btn';
+          copyBtn.textContent = 'Copy URL';
+          copyBtn.addEventListener('click', function() {
+            urlInput.select();
+            document.execCommand('copy');
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy URL';
+            }, 2000);
+          });
+          resultElement.appendChild(copyBtn);
+          
+          // Add to results container
+          resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
+          
+          // Reset form
+          fileInput.value = '';
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = 'Select Image';
+          
+          // Save to localStorage for gallery
+          try {
+            const STORAGE_KEY = 'victory-school-gallery-images';
+            const savedImages = localStorage.getItem(STORAGE_KEY);
+            const images = savedImages ? JSON.parse(savedImages) : [];
+            
+            const newImage = {
+              url: data.url,
+              fileName: data.fileName || file.name,
+              uploadedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify([newImage, ...images]));
+          } catch (error) {
+            console.error('Error saving to local storage:', error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to upload image. Please try again.');
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = 'Select Image';
+        });
+      }
+    });
+  </script>
+</body>
+</html>

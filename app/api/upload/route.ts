@@ -18,16 +18,26 @@ export async function POST(request: NextRequest) {
 
     // Generate a unique filename
     const fileExtension = file.name.split(".").pop()
-    const fileName = `blog-${nanoid()}.${fileExtension}`
+    const fileName = `victory-school-${nanoid()}.${fileExtension}`
 
     // Upload to Vercel Blob
     const blob = await put(fileName, file, {
       access: "public",
     })
 
-    return NextResponse.json({ url: blob.url })
+    return NextResponse.json({
+      success: true,
+      url: blob.url,
+      fileName: blob.pathname,
+    })
   } catch (error) {
     console.error("Error uploading file:", error)
-    return NextResponse.json({ error: "Error uploading file" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Error uploading file",
+      },
+      { status: 500 },
+    )
   }
 }

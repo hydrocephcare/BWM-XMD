@@ -47,7 +47,7 @@ export function ContactInfo() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-navy-700">WhatsApp</h3>
-            <p className="text-gray-600">+254 712 345 678</p>
+            <p className="text-gray-600">(254) 115-475-543</p>
             <p className="text-xs text-gray-500 mt-1">Quick responses via WhatsApp</p>
           </div>
         </div>

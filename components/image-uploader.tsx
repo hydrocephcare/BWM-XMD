@@ -5,8 +5,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { toast } from "@/components/ui/use-toast"
-import { ImagePlus, Trash2, Copy, Check } from "lucide-react"
+import { ImagePlus, Trash2, Copy, Check, Loader2 } from "lucide-react"
 
 interface ImageUploaderProps {
   initialImage?: string
@@ -67,17 +66,35 @@ export function ImageUploader({
         onImageChange(imageUrl)
       }
 
-      toast({
-        title: "Image uploaded",
-        description: "Your image has been uploaded successfully.",
-      })
+      // Store in local storage for gallery
+      try {
+        const STORAGE_KEY = "victory-school-gallery-images"
+        const savedImages = localStorage.getItem(STORAGE_KEY)
+        const images = savedImages ? JSON.parse(savedImages) : []
+
+        const newImage = {
+          url: imageUrl,
+          fileName: data.fileName || file.name,
+          uploadedAt: new Date().toISOString(),
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([newImage, ...images]))
+
+        // Trigger storage event for other tabs
+        window.dispatchEvent(
+          new StorageEvent("storage", {
+            key: STORAGE_KEY,
+            newValue: JSON.stringify([newImage, ...images]),
+          }),
+        )
+      } catch (error) {
+        console.error("Error saving to local storage:", error)
+      }
+
+      alert("Image uploaded successfully!")
     } catch (error) {
       console.error("Error uploading image:", error)
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your image. Please try again.",
-        variant: "destructive",
-      })
+      alert("There was an error uploading your image. Please try again.")
     } finally {
       setIsUploading(false)
     }
@@ -97,11 +114,6 @@ export function ImageUploader({
       navigator.clipboard.writeText(image)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
-
-      toast({
-        title: "URL copied",
-        description: "Image URL has been copied to clipboard.",
-      })
     }
   }
 
@@ -137,7 +149,14 @@ export function ImageUploader({
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
-              {isUploading ? "Uploading..." : buttonText}
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                buttonText
+              )}
             </Button>
           </div>
         </Card>
@@ -155,7 +174,14 @@ export function ImageUploader({
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
-              {isUploading ? "Uploading..." : "Change"}
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                "Change"
+              )}
             </Button>
           </div>
         </div>

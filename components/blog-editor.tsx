@@ -8,14 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
 import { ImageUploader } from "@/components/image-uploader"
 import { Save, ArrowLeft, Bold, Italic, List, Heading, LinkIcon, ImageIcon } from "lucide-react"
-import dynamic from "next/dynamic"
 
-// Dynamically import the editor to avoid SSR issues
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false })
-import "react-quill/dist/quill.snow.css"
+// Storage key for blog posts
+const STORAGE_KEY = "victory-school-blog-posts"
 
 interface BlogEditorProps {
   initialData?: {
@@ -37,6 +34,7 @@ export function BlogEditor({ initialData, isEditing = false }: BlogEditorProps) 
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || "")
   const [content, setContent] = useState(initialData?.content || "")
   const [coverImage, setCoverImage] = useState(initialData?.coverImage || "")
+  const [saveMessage, setSaveMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Generate slug from title
@@ -61,37 +59,52 @@ export function BlogEditor({ initialData, isEditing = false }: BlogEditorProps) 
     e.preventDefault()
 
     if (!title || !content || !excerpt) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      })
+      setSaveMessage("Please fill in all required fields.")
       return
     }
 
     setIsSubmitting(true)
+    setSaveMessage("")
 
     try {
-      // Here you would typically save the blog post to your database
-      // For now, we'll just simulate a successful save
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Create a new blog post object
+      const blogPost = {
+        id: initialData?.id || Date.now().toString(),
+        title,
+        slug,
+        excerpt,
+        content,
+        coverImage,
+        publishedAt: new Date().toISOString(),
+        author: "Admin User", // In a real app, this would come from the authenticated user
+      }
 
-      toast({
-        title: isEditing ? "Blog updated" : "Blog created",
-        description: isEditing
-          ? "Your blog post has been updated successfully."
-          : "Your blog post has been created successfully.",
-      })
+      // Get existing blog posts from localStorage
+      const existingPostsJSON = localStorage.getItem(STORAGE_KEY)
+      const existingPosts = existingPostsJSON ? JSON.parse(existingPostsJSON) : []
 
-      // Redirect to the blogs page
-      router.push("/admin")
+      // If editing, update the existing post
+      // Otherwise, add the new post to the beginning of the array
+      let updatedPosts
+      if (isEditing && initialData?.id) {
+        updatedPosts = existingPosts.map((post: any) => (post.id === initialData.id ? blogPost : post))
+      } else {
+        updatedPosts = [blogPost, ...existingPosts]
+      }
+
+      // Save to localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPosts))
+
+      // Show success message
+      setSaveMessage(isEditing ? "Blog post updated successfully!" : "Blog post created successfully!")
+
+      // Redirect after a short delay
+      setTimeout(() => {
+        router.push("/admin?tab=blogs")
+      }, 1500)
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error saving your blog post. Please try again.",
-        variant: "destructive",
-      })
       console.error("Error saving blog post:", error)
+      setSaveMessage("Error saving blog post. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -133,10 +146,7 @@ export function BlogEditor({ initialData, isEditing = false }: BlogEditorProps) 
     if (coverImage) {
       insertFormatting(`<img src="${coverImage}" alt="Blog image" class="w-full my-4" />`, "")
     } else {
-      toast({
-        title: "No image available",
-        description: "Please upload a cover image first, then you can insert it into your content.",
-      })
+      setSaveMessage("Please upload a cover image first, then you can insert it into your content.")
     }
   }
 
@@ -152,6 +162,14 @@ export function BlogEditor({ initialData, isEditing = false }: BlogEditorProps) 
           {isSubmitting ? "Saving..." : isEditing ? "Update Post" : "Publish Post"}
         </Button>
       </div>
+
+      {saveMessage && (
+        <div
+          className={`p-4 rounded-md ${saveMessage.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
+        >
+          {saveMessage}
+        </div>
+      )}
 
       <div className="grid gap-6">
         <div className="space-y-2">
