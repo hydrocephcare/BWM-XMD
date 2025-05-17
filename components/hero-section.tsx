@@ -58,7 +58,7 @@ export function HeroSection() {
                 <GraduationCap className="h-8 w-8 text-white" />
               </div>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-navy-800 leading-tight">
-                Victory School Club Membership System
+                VICTORY SCHOOL CLUB MEMBERSHIP SYSTEM (KCSE 2025)
               </h1>
             </div>
 

@@ -36,6 +36,7 @@ export function Header() {
               <span className="text-xl font-bold text-navy-700">Victory</span>
               <span className="text-xl font-bold text-gold-500">School</span>
               <span className="text-xl font-bold text-navy-700">Project</span>
+              <span className="text-xl font-bold text-navy-700">KCSE 2025</span>
             </Link>
           </div>
 
