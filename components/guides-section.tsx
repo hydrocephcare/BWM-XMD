@@ -31,6 +31,7 @@ export function GuidesSection() {
         if (images.guide1) newGuideImages.guide1 = images.guide1
         if (images.guide2) newGuideImages.guide2 = images.guide2
         if (images.guide3) newGuideImages.guide3 = images.guide3
+        if (images.whatsapp) newGuideImages.whatsapp = images.whatsapp
 
         setGuideImages(newGuideImages)
       }

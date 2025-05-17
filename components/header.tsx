@@ -35,6 +35,7 @@ export function Header() {
             <Link href="/" className="flex items-center space-x-2" onClick={closeMenu}>
               <span className="text-xl font-bold text-navy-700">Victory</span>
               <span className="text-xl font-bold text-gold-500">School</span>
+              <span className="text-xl font-bold text-navy-700">Project</span>
             </Link>
           </div>
 
@@ -51,9 +52,6 @@ export function Header() {
             </Link>
             <Link href="/#download" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
               Download Projects
-            </Link>
-            <Link href="/#guides" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
-              View Guides
             </Link>
             <Link href="/blogs" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
               Blogs
@@ -106,13 +104,6 @@ export function Header() {
               onClick={closeMenu}
             >
               Download Projects
-            </Link>
-            <Link
-              href="/#guides"
-              className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
-            >
-              View Guides
             </Link>
             <Link
               href="/blogs"
