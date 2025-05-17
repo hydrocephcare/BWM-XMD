@@ -79,10 +79,9 @@ export function HomeEditor() {
       )}
 
       <Tabs defaultValue="main">
-        <TabsList className="grid grid-cols-3 mb-8">
+        <TabsList className="grid grid-cols-2 mb-8">
           <TabsTrigger value="main">Main Sections</TabsTrigger>
           <TabsTrigger value="guides">Guides & Tutorials</TabsTrigger>
-          <TabsTrigger value="other">Other Sections</TabsTrigger>
         </TabsList>
 
         <TabsContent value="main">
@@ -106,21 +105,21 @@ export function HomeEditor() {
               </CardContent>
             </Card>
 
-            {/* Zero Plagiarism Image */}
+            {/* About Section Image (Zero Plagiarism) */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <ImageIcon className="h-5 w-5 mr-2" />
-                  Zero Plagiarism Image
+                  About Section Image
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">The image below the "Zero Plagiarism" section</p>
                 <ImageUploader
-                  initialImage={images["zeroPlagiarism"] || ""}
-                  onImageChange={(url) => handleImageChange("zeroPlagiarism", url)}
+                  initialImage={images["about"] || ""}
+                  onImageChange={(url) => handleImageChange("about", url)}
                   aspectRatio="landscape"
-                  buttonText="Upload Zero Plagiarism Image"
+                  buttonText="Upload About Image"
                 />
               </CardContent>
             </Card>
@@ -184,50 +183,6 @@ export function HomeEditor() {
                   onImageChange={(url) => handleImageChange("guide3", url)}
                   aspectRatio="landscape"
                   buttonText="Upload Sample Paper Image"
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="other">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* WhatsApp Group Image */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <ImageIcon className="h-5 w-5 mr-2" />
-                  WhatsApp Group Image
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Image for the KCSE 2025 Support Group WhatsApp section
-                </p>
-                <ImageUploader
-                  initialImage={images["whatsapp"] || ""}
-                  onImageChange={(url) => handleImageChange("whatsapp", url)}
-                  aspectRatio="landscape"
-                  buttonText="Upload WhatsApp Group Image"
-                />
-              </CardContent>
-            </Card>
-
-            {/* Download Section Image */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <ImageIcon className="h-5 w-5 mr-2" />
-                  Download Section Image
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">Background image for the download section</p>
-                <ImageUploader
-                  initialImage={images["download"] || ""}
-                  onImageChange={(url) => handleImageChange("download", url)}
-                  aspectRatio="landscape"
-                  buttonText="Upload Download Section Image"
                 />
               </CardContent>
             </Card>

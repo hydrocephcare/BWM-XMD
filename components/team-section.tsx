@@ -1,35 +1,14 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef } from "react"
 import Image from "next/image"
 import { useInView } from "framer-motion"
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
 
 export function TeamSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.2 })
-  const [teamMembers, setTeamMembers] = useState([])
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  useEffect(() => {
-    // Check if user is admin
-    const urlParams = new URLSearchParams(window.location.search)
-    setIsAdmin(urlParams.get("admin") === "true")
-
-    // Load team members from localStorage
-    try {
-      const savedTeam = localStorage.getItem("victory-school-team")
-      if (savedTeam) {
-        setTeamMembers(JSON.parse(savedTeam))
-      }
-    } catch (error) {
-      console.error("Error loading team members:", error)
-    }
-  }, [])
 
   const container = {
     hidden: { opacity: 0 },
@@ -46,10 +25,6 @@ export function TeamSection() {
     show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   }
 
-  if (teamMembers.length === 0 && !isAdmin) {
-    return null
-  }
-
   return (
     <section className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4">
@@ -59,61 +34,95 @@ export function TeamSection() {
             Our team consists of experienced educators, software developers, and support staff dedicated to helping KCSE
             students succeed in their Computer Studies projects.
           </p>
-
-          {isAdmin && (
-            <div className="mt-6">
-              <Button asChild>
-                <Link href="/admin/team">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Manage Team Members
-                </Link>
-              </Button>
-            </div>
-          )}
         </div>
 
-        {teamMembers.length > 0 ? (
-          <motion.div
-            ref={ref}
-            variants={container}
-            initial="hidden"
-            animate={isInView ? "show" : "hidden"}
-            className="grid gap-6 md:grid-cols-3 lg:grid-cols-4"
-          >
-            {teamMembers.map((member, index) => (
-              <motion.div key={index} variants={item}>
-                <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md hover:border-navy-200">
-                  <div className="relative h-64 w-full">
-                    <Image
-                      src={member.image || "/placeholder.svg?height=400&width=300"}
-                      alt={`${member.name}, ${member.role}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="p-4 text-center">
-                    <h3 className="text-lg font-semibold text-navy-700">{member.name}</h3>
-                    <Badge className="mt-1 mb-2 bg-navy-100 text-navy-700 hover:bg-navy-200">{member.role}</Badge>
-                    <p className="text-sm text-gray-600">{member.bio}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          isAdmin && (
-            <div className="text-center p-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-              <h3 className="text-lg font-medium text-gray-600 mb-4">No team members yet</h3>
-              <p className="text-gray-500 mb-6">Add team members from the admin panel</p>
-              <Button asChild>
-                <Link href="/admin/team">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Team Members
-                </Link>
-              </Button>
+        <motion.div
+          ref={ref}
+          variants={container}
+          initial="hidden"
+          animate={isInView ? "show" : "hidden"}
+          className="grid gap-6 md:grid-cols-3 lg:grid-cols-4"
+        >
+          <motion.div variants={item}>
+            <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md hover:border-navy-200">
+              <div className="relative h-64 w-full">
+                <Image
+                  src="/placeholder.svg?height=400&width=300"
+                  alt="John Doe, Lead Developer with over 10 years of experience in KCSE curriculum, wearing professional attire and smiling confidently"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-4 text-center">
+                <h3 className="text-lg font-semibold text-navy-700">John Doe</h3>
+                <Badge className="mt-1 mb-2 bg-navy-100 text-navy-700 hover:bg-navy-200">Lead Developer</Badge>
+                <p className="text-sm text-gray-600">
+                  Computer Science teacher with over 10 years of experience in KCSE curriculum.
+                </p>
+              </div>
             </div>
-          )
-        )}
+          </motion.div>
+
+          <motion.div variants={item}>
+            <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md hover:border-navy-200">
+              <div className="relative h-64 w-full">
+                <Image
+                  src="/placeholder.svg?height=400&width=300"
+                  alt="Jane Smith, Project Manager and former KCSE examiner, in a professional setting with educational materials visible in the background"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-4 text-center">
+                <h3 className="text-lg font-semibold text-navy-700">Jane Smith</h3>
+                <Badge className="mt-1 mb-2 bg-navy-100 text-navy-700 hover:bg-navy-200">Project Manager</Badge>
+                <p className="text-sm text-gray-600">
+                  Former KCSE examiner with expertise in project documentation and assessment.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div variants={item}>
+            <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md hover:border-navy-200">
+              <div className="relative h-64 w-full">
+                <Image
+                  src="/placeholder.svg?height=400&width=300"
+                  alt="David Kamau, Database Specialist working on a computer with database diagrams visible on screen"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-4 text-center">
+                <h3 className="text-lg font-semibold text-navy-700">David Kamau</h3>
+                <Badge className="mt-1 mb-2 bg-navy-100 text-navy-700 hover:bg-navy-200">Database Specialist</Badge>
+                <p className="text-sm text-gray-600">
+                  Database expert with a passion for teaching students efficient data modeling techniques.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div variants={item}>
+            <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 transition-all duration-200 hover:shadow-md hover:border-navy-200">
+              <div className="relative h-64 w-full">
+                <Image
+                  src="/placeholder.svg?height=400&width=300"
+                  alt="Sarah Wanjiku, Support Lead assisting a student with their project, demonstrating her dedication to student success"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-4 text-center">
+                <h3 className="text-lg font-semibold text-navy-700">Sarah Wanjiku</h3>
+                <Badge className="mt-1 mb-2 bg-navy-100 text-navy-700 hover:bg-navy-200">Support Lead</Badge>
+                <p className="text-sm text-gray-600">
+                  Dedicated to providing exceptional support and guidance to students throughout their project journey.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   )
