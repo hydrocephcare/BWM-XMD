@@ -7,7 +7,7 @@ interface CountdownTimerProps {
   targetDate?: string
 }
 
-export function CountdownTimer({ targetDate = "2025-07-31T00:00:00" }: CountdownTimerProps) {
+export function CountdownTimer({ targetDate = "2025-12-31T23:59:59" }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -19,33 +19,32 @@ export function CountdownTimer({ targetDate = "2025-07-31T00:00:00" }: Countdown
   useEffect(() => {
     setIsMounted(true)
 
-    const calculateTimeLeft = () => {
-      const difference = new Date(targetDate).getTime() - new Date().getTime()
+    const updateTimer = () => {
+      const now = new Date()
+      const target = new Date(targetDate)
+      const difference = target.getTime() - now.getTime()
 
-      if (difference <= 0) {
-        return {
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-        }
-      }
+      // Debug info - remove these console.logs after testing
+      console.log('Now:', now.toString())
+      console.log('Target:', target.toString())
+      console.log('Difference (ms):', difference)
 
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((difference % (1000 * 60)) / 1000),
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+
+        setTimeLeft({ days, hours, minutes, seconds })
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
       }
     }
 
-    setTimeLeft(calculateTimeLeft())
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
 
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft())
-    }, 1000)
-
-    return () => clearInterval(timer)
+    return () => clearInterval(interval)
   }, [targetDate])
 
   if (!isMounted) {
@@ -56,7 +55,7 @@ export function CountdownTimer({ targetDate = "2025-07-31T00:00:00" }: Countdown
     <div className="flex flex-col items-center">
       <div className="flex items-center gap-2 mb-2">
         <Clock className="h-4 w-4 text-navy-600 dark:text-gold-400" />
-        <span className="text-sm font-medium text-navy-700 dark:text-white">Milestone Two Countdown</span>
+        <span className="text-sm font-medium text-navy-700 dark:text-white">Comp Exam Paper Countdown</span>
       </div>
       <div className="grid grid-cols-4 gap-2 text-center">
         <div>

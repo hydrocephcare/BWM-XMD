@@ -22,11 +22,14 @@ export function AboutContent() {
           >
             <div className="relative h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-lg">
               <Image
-                src="/placeholder.svg?height=800&width=600"
-                alt="About Victory School Club"
+                src="https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80"
+                alt="Students collaborating on computer projects - representing our mission to help KCSE Computer Studies students succeed"
                 fill
                 className="object-cover"
+                priority
               />
+              {/* Overlay for better text contrast if needed */}
+              <div className="absolute inset-0 bg-black/10"></div>
             </div>
           </motion.div>
 

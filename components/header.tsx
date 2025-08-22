@@ -36,7 +36,6 @@ export function Header() {
               <span className="text-xl font-bold text-navy-700">Victory</span>
               <span className="text-xl font-bold text-gold-500">School</span>
               <span className="text-xl font-bold text-navy-700">Project</span>
-              <span className="text-xl font-bold text-navy-700">KCSE 2025</span>
             </Link>
           </div>
 
@@ -56,9 +55,6 @@ export function Header() {
             </Link>
             <Link href="/blogs" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
               Blogs
-            </Link>
-            <Link href="/admin" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
-              Admin
             </Link>
             <Button asChild className="ml-4 bg-navy-600 hover:bg-navy-700">
               <Link href="/#download">Download Now</Link>

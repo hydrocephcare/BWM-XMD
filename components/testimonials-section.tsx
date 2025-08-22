@@ -55,16 +55,16 @@ export function TestimonialsSection() {
                   school="Alliance Girls High School"
                   year="2022"
                   quote="The resources and guidance provided were invaluable in helping me successfully complete my KCSE project. The step-by-step approach made everything clear and manageable."
-                  image="/placeholder.svg?height=100&width=100"
-                  imageAlt="Portrait of Jane M., a former Alliance Girls High School student who successfully completed her KCSE project"
+                  image="https://images.unsplash.com/photo-1595152772835-219674b2a8a6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80"
+                  imageAlt="Young African female student with a bright smile"
                 />
                 <TestimonialCard
                   name="David K."
                   school="Starehe Boys Centre"
                   year="2022"
                   quote="I was struggling with the database design until I found this resource. The documentation was clear and the support team was always available to answer my questions."
-                  image="/placeholder.svg?height=100&width=100"
-                  imageAlt="Portrait of David K., a former Starehe Boys Centre student who improved his database design skills through our resources"
+                  image=""
+                  imageAlt=""
                 />
               </div>
             </TabsContent>
@@ -76,16 +76,16 @@ export function TestimonialsSection() {
                   school="Mang'u High School"
                   year="2023"
                   quote="Thanks to the comprehensive tutorials and expert support, I was able to design and implement a fully functional database for my KCSE project. Highly recommended!"
-                  image="/placeholder.svg?height=100&width=100"
-                  imageAlt="Portrait of Joseph Andrew, a former Mang'u High School student who created a fully functional database with our guidance"
+                  image=""
+                  imageAlt=""
                 />
                 <TestimonialCard
                   name="Faith W."
                   school="Kenya High School"
                   year="2023"
                   quote="The project guidelines were extremely helpful. I managed to score an A in my Computer Studies project thanks to the clear instructions and support."
-                  image="/placeholder.svg?height=100&width=100"
-                  imageAlt="Portrait of Faith W., a former Kenya High School student who achieved an A grade with help from our project guidelines"
+                  image="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80"
+                  imageAlt="Young African female student with a confident expression"
                 />
               </div>
             </TabsContent>
@@ -97,16 +97,16 @@ export function TestimonialsSection() {
                   school="Nairobi School"
                   year="2024"
                   quote="Mafunzo yaliyotolewa hayakunisaidia tu kuelewa vipengele vya kiufundi, bali pia yalifanya mchakato wa uandishi wa hati kuwa rahisi zaidi. Nilijihisi nikiwa na ujasiri kote katika mradi."
-                  image="/placeholder.svg?height=100&width=100"
-                  imageAlt="Portrait of Mark Doe, a former Nairobi School student who gained confidence in technical documentation through our training"
+                  image="https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80"
+                  imageAlt="Young African male student with a cheerful smile"
                 />
                 <TestimonialCard
                   name="Sarah N."
                   school="Precious Blood Riruta"
                   year="2024"
                   quote="The project materials were well-organized and easy to follow. I appreciated the detailed explanations and the responsive support team whenever I had questions."
-                  image="/placeholder.svg?height=100&width=100"
-                  imageAlt="Portrait of Sarah N., a former Precious Blood Riruta student who benefited from our organized materials and responsive support"
+                  image=""
+                  imageAlt=""
                 />
               </div>
             </TabsContent>
@@ -131,9 +131,11 @@ function TestimonialCard({ name, school, year, quote, image, imageAlt }: Testimo
     <Card className="border-gray-200 transition-all duration-200 hover:shadow-md hover:border-navy-200">
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-navy-100">
-            <Image src={image || "/placeholder.svg"} alt={imageAlt} fill className="object-cover" />
-          </div>
+          {image && (
+            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-navy-100">
+              <Image src={image} alt={imageAlt} fill className="object-cover" />
+            </div>
+          )}
           <div className="flex-1">
             <div className="mb-3 flex items-center">
               <div>

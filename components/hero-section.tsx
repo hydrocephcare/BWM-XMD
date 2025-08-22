@@ -58,7 +58,7 @@ export function HeroSection() {
                 <GraduationCap className="h-8 w-8 text-white" />
               </div>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-navy-800 leading-tight">
-                VICTORY SCHOOL CLUB MEMBERSHIP SYSTEM (KCSE 2025)
+                Victory School Club Membership System
               </h1>
             </div>
 
@@ -83,7 +83,7 @@ export function HeroSection() {
           >
             <div className="relative h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-2xl">
               <Image
-                src={heroImage || "/placeholder.svg"}
+                src="https://project.victoryschoolclub.co.ke/wp-content/uploads/2025/03/Colorful-Rainbow-Pride-Instagram-Profile-Picture.png"
                 alt="Student using the Victory School Club Membership System on a computer, showcasing the user interface and database functionality"
                 fill
                 className="object-cover"

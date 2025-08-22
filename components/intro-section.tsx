@@ -1,34 +1,46 @@
 "use client"
 
-import { useRef } from "react"
-import { useInView } from "framer-motion"
-import { motion } from "framer-motion"
-import { Card } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { ScrollReveal } from "@/components/scroll-reveal"
+import { ScrollButton } from "@/components/scroll-button"
+import { Download } from "lucide-react"
 
 export function IntroSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, amount: 0.3 })
+  const [heroImage, setHeroImage] = useState("/placeholder.svg?height=600&width=1200")
+
+  useEffect(() => {
+    // Load saved images from localStorage
+    try {
+      const savedImages = localStorage.getItem("victory-school-home-images")
+      if (savedImages) {
+        const images = JSON.parse(savedImages)
+        if (images.hero) {
+          setHeroImage(images.hero)
+        }
+      }
+    } catch (error) {
+      console.error("Error loading hero image:", error)
+    }
+  }, [])
 
   return (
-    <section className="py-8 md:py-12 bg-white dark:bg-navy-800">
-      <div className="container mx-auto px-4">
-        <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-3xl mx-auto text-center"
-        >
-          <Card className="p-6 md:p-8 bg-navy-50/50 dark:bg-navy-700/50 border-navy-100 dark:border-navy-600">
-            <p className="text-lg text-gray-700 dark:text-gray-200 leading-relaxed">
-              Your project, Victory School Club Membership System, should be able to facilitate student registration, track membership payments, organizes club activities, and generates financial reports. The system should enhance transparency and streamlines the administration of co-curricular activities, promoting student engagement and effective management.
-              
-              This system helps schools manage and track member data, project submissions, and related operations. Ideal
-              for computer studies or IT project demonstrations.
-            </p>
-          </Card>
-        </motion.div>
+    <section className="relative bg-white overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src={heroImage || "/placeholder.svg"}
+          alt="Students working on a computer project in a classroom setting"
+          fill
+          priority
+          className="object-cover opacity-20"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-white"></div>
       </div>
+
+      
     </section>
   )
 }

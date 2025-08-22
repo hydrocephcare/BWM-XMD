@@ -85,7 +85,7 @@ export function AboutSection() {
           >
             <div className="relative h-[400px] md:h-[500px] rounded-xl overflow-hidden shadow-lg">
               <Image
-                src={zeroPlagiarismImage || "/placeholder.svg"}
+                src="https://milestones.sowetomarkets.com/wp-content/uploads/2025/03/Basketball-Club-Sports-Badge-Logo.png"
                 alt="Student receiving personalized project guidance from a teacher, with original code visible on computer screens"
                 fill
                 className="object-cover"
