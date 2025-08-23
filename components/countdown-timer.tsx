@@ -55,7 +55,7 @@ export function CountdownTimer({ targetDate = "2025-12-31T23:59:59" }: Countdown
     <div className="flex flex-col items-center">
       <div className="flex items-center gap-2 mb-2">
         <Clock className="h-4 w-4 text-navy-600 dark:text-gold-400" />
-        <span className="text-sm font-medium text-navy-700 dark:text-white">Computer project Countdown</span>
+        <span className="text-sm font-medium text-navy-700 dark:text-white">Comp Exam Paper Countdown</span>
       </div>
       <div className="grid grid-cols-4 gap-2 text-center">
         <div>

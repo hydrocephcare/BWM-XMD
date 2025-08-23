@@ -83,7 +83,7 @@ export function HeroSection() {
           >
             <div className="relative h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-2xl">
               <Image
-                src="https://project.victoryschoolclub.co.ke/wp-content/uploads/2025/03/Colorful-Rainbow-Pride-Instagram-Profile-Picture.png"
+                src="https://fv5-3.files.fm/thumb_show.php?i=68hyjesjyn&view&v=1&PHPSESSID=84a740df4f18fac40ad71b12a3f496276f16b1a5"
                 alt="Student using the Victory School Club Membership System on a computer, showcasing the user interface and database functionality"
                 fill
                 className="object-cover"
