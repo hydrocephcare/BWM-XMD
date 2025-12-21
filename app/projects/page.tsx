@@ -227,20 +227,17 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
       console.log(`[v0] Checking payment status, attempt ${attempts}`)
 
       try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("payments")
-          .select("payment_status")
-          .eq("id", paymentId)
-          .single()
+        // Query the API route which checks the correct Supabase
+        const response = await fetch(`/api/check-payment?payment_id=${paymentId}`)
+        const result = await response.json()
 
-        if (error) {
-          console.log("[v0] Payment check error:", error)
-        } else if (data) {
-          console.log("[v0] Payment status:", data.payment_status)
+        if (result.error) {
+          console.log("[v0] Payment check error:", result.error)
+        } else if (result.payment_status) {
+          console.log("[v0] Payment status:", result.payment_status)
           
           // Check for both "success" and "completed" status
-          if (data.payment_status === "success" || data.payment_status === "completed") {
+          if (result.payment_status === "success" || result.payment_status === "completed") {
             console.log("[v0] Payment successful!")
             clearInterval(checkInterval)
             setStatus("success")
@@ -252,7 +249,7 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
               onClose()
             }, 2000)
             return
-          } else if (data.payment_status === "failed") {
+          } else if (result.payment_status === "failed") {
             console.log("[v0] Payment failed")
             clearInterval(checkInterval)
             setStatus("error")
