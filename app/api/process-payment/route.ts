@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient, createClient2 } from "@/lib/supabase";
+import { createServerClient, createServerClient2 } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient();
-    const supabase2 = createClient2();
+    const supabase = createServerClient();
+    const supabase2 = createServerClient2();
 
     console.log("[v0] Supabase clients created successfully");
 
