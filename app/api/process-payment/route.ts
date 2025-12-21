@@ -43,14 +43,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Also insert to second Supabase project
+    // Also insert to second Supabase project (let it generate its own ID)
     const { error: db2Error } = await supabase2
       .from("payments")
-      .insert([{ ...paymentData, id: paymentRecord.id }]);
+      .insert([paymentData]); // Don't include the ID, let Supabase 2 generate its own
 
     if (db2Error) {
       console.warn("[v0] Supabase 2 insert failed:", db2Error);
       // Continue anyway - primary DB succeeded
+    } else {
+      console.log("[v0] Payment record also saved to Supabase 2");
     }
 
     console.log("[v0] Payment record created:", paymentRecord.id);
@@ -89,16 +91,24 @@ export async function POST(request: NextRequest) {
     }
 
     if (data.status === "success") {
-      // Update both Supabase projects
+      // Update primary Supabase with transaction reference
       await supabase
         .from("payments")
         .update({ transaction_id: data.reference || paymentRecord.id })
         .eq("id", paymentRecord.id);
 
+      // Update secondary Supabase by matching phone and amount (since ID differs)
       await supabase2
         .from("payments")
-        .update({ transaction_id: data.reference || paymentRecord.id })
-        .eq("id", paymentRecord.id);
+        .update({ 
+          transaction_id: data.reference || paymentRecord.id,
+          payment_status: "success" 
+        })
+        .eq("phone_number", phone)
+        .eq("amount", amount)
+        .eq("payment_status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
       return NextResponse.json({
         status: "success",
@@ -114,10 +124,15 @@ export async function POST(request: NextRequest) {
         .update({ payment_status: "failed" })
         .eq("id", paymentRecord.id);
 
+      // Update secondary Supabase by matching phone and amount
       await supabase2
         .from("payments")
         .update({ payment_status: "failed" })
-        .eq("id", paymentRecord.id);
+        .eq("phone_number", phone)
+        .eq("amount", amount)
+        .eq("payment_status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
       return NextResponse.json(
         { status: "error", error: data.error || "Payment initiation failed" },
