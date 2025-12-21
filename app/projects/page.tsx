@@ -239,8 +239,8 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
         } else if (data) {
           console.log("[v0] Payment status:", data.payment_status)
           
-          // Check for "success" status (what your callback sets)
-          if (data.payment_status === "success") {
+          // Check for both "success" and "completed" status
+          if (data.payment_status === "success" || data.payment_status === "completed") {
             console.log("[v0] Payment successful!")
             clearInterval(checkInterval)
             setStatus("success")
