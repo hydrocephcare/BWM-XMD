@@ -3,20 +3,22 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Download, FileText, Database, ExternalLink } from "lucide-react"
+import { Download, FileText, Database, ExternalLink, Loader2 } from "lucide-react"
+import { createClient } from "@/lib/supabase"
 
 interface ProjectFile {
   id: string
-  name: string
-  type: "word" | "access"
-  url: string
+  batch_name: string
+  file_name: string
+  file_type: string
   price: number
-  batch: number
-  isExternalLink?: boolean
+  file_url: string
+  is_external_link: boolean
 }
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectFile[]>([])
+  const [loading, setLoading] = useState(true)
   const [paymentModal, setPaymentModal] = useState<{ show: boolean; file: ProjectFile | null }>({
     show: false,
     file: null,
@@ -26,10 +28,20 @@ export default function ProjectsPage() {
     loadProjects()
   }, [])
 
-  const loadProjects = () => {
-    const saved = localStorage.getItem("projectFiles")
-    if (saved) {
-      setProjects(JSON.parse(saved))
+  const loadProjects = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.from("projects").select("*").order("batch_name", { ascending: true })
+
+      if (error) {
+        console.error("[v0] Error loading projects:", error)
+      } else {
+        setProjects(data || [])
+      }
+    } catch (error) {
+      console.error("[v0] Failed to load projects:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -37,7 +49,15 @@ export default function ProjectsPage() {
     setPaymentModal({ show: true, file })
   }
 
-  const batches = [...new Set(projects.map((p) => p.batch))].sort()
+  const batches = [...new Set(projects.map((p) => p.batch_name))].sort()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12">
@@ -63,12 +83,12 @@ export default function ProjectsPage() {
               <div key={batch}>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="h-1 w-12 bg-blue-600 rounded"></div>
-                  <h2 className="text-2xl font-bold text-gray-900">Batch {batch}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{batch}</h2>
                   <div className="h-1 flex-1 bg-gray-200 rounded"></div>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {projects
-                    .filter((p) => p.batch === batch)
+                    .filter((p) => p.batch_name === batch)
                     .map((file) => (
                       <Card
                         key={file.id}
@@ -76,19 +96,19 @@ export default function ProjectsPage() {
                       >
                         <div className="flex items-start gap-4 mb-4">
                           <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
-                            {file.type === "word" ? (
+                            {file.file_type === "Word" ? (
                               <FileText className="w-7 h-7 text-white" />
                             ) : (
                               <Database className="w-7 h-7 text-white" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-gray-900 mb-1 leading-tight">{file.name}</h3>
+                            <h3 className="font-bold text-gray-900 mb-1 leading-tight">{file.file_name}</h3>
                             <div className="flex items-center gap-2">
                               <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                                {file.type === "word" ? "Word Document" : "Access Database"}
+                                {file.file_type === "Word" ? "Word Document" : "Access Database"}
                               </span>
-                              {file.isExternalLink && <ExternalLink className="w-3 h-3 text-gray-400" />}
+                              {file.is_external_link && <ExternalLink className="w-3 h-3 text-gray-400" />}
                             </div>
                           </div>
                         </div>
@@ -152,7 +172,8 @@ export default function ProjectsPage() {
 function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => void }) {
   const [phone, setPhone] = useState("")
   const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState<"idle" | "processing" | "success" | "error">("idle")
+  const [status, setStatus] = useState<"idle" | "processing" | "checking" | "success" | "error">("idle")
+  const [paymentReference, setPaymentReference] = useState("")
 
   const handlePayment = async () => {
     if (!phone || phone.length < 10) {
@@ -164,6 +185,8 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
     setStatus("processing")
 
     try {
+      console.log("[v0] Initiating payment for file:", file.id)
+
       const response = await fetch("/api/process-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -177,24 +200,62 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
       })
 
       const data = await response.json()
+      console.log("[v0] Payment response:", data)
 
-      if (data.status === "success") {
-        // Simulate payment processing
-        setTimeout(() => {
-          setStatus("success")
-          setTimeout(() => {
-            window.open(file.url, "_blank")
-            onClose()
-          }, 2000)
-        }, 3000)
+      if (data.status === "success" && data.reference) {
+        setPaymentReference(data.reference)
+        setStatus("checking")
+        // Start checking payment status
+        checkPaymentStatus(data.reference)
       } else {
         setStatus("error")
+        setLoading(false)
       }
     } catch (error) {
+      console.error("[v0] Payment error:", error)
       setStatus("error")
-    } finally {
       setLoading(false)
     }
+  }
+
+  const checkPaymentStatus = async (reference: string) => {
+    const maxAttempts = 30 // Check for up to 60 seconds
+    let attempts = 0
+
+    const checkInterval = setInterval(async () => {
+      attempts++
+      console.log(`[v0] Checking payment status, attempt ${attempts}`)
+
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase.from("payments").select("*").eq("transaction_id", reference).single()
+
+        if (error) {
+          console.log("[v0] Payment not found yet:", error)
+        } else if (data && data.payment_status === "completed") {
+          console.log("[v0] Payment successful!")
+          clearInterval(checkInterval)
+          setStatus("success")
+          setLoading(false)
+
+          // Download file after 2 seconds
+          setTimeout(() => {
+            window.open(file.file_url, "_blank")
+            onClose()
+          }, 2000)
+          return
+        }
+      } catch (error) {
+        console.error("[v0] Error checking payment:", error)
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(checkInterval)
+        setStatus("error")
+        setLoading(false)
+        console.log("[v0] Payment check timeout")
+      }
+    }, 2000) // Check every 2 seconds
   }
 
   return (
@@ -206,7 +267,7 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
           <>
             <div className="mb-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">File:</p>
-              <p className="font-semibold text-gray-900">{file.name}</p>
+              <p className="font-semibold text-gray-900">{file.file_name}</p>
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-blue-200">
                 <span className="text-sm text-gray-600">Amount to Pay:</span>
                 <span className="text-2xl font-bold text-blue-600">KES {file.price}</span>
@@ -237,11 +298,17 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
           </>
         )}
 
-        {status === "processing" && (
+        {(status === "processing" || status === "checking") && (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
-            <p className="font-semibold text-lg text-gray-900 mb-2">Check your phone</p>
-            <p className="text-sm text-gray-600">Enter your M-Pesa PIN to complete payment</p>
+            <p className="font-semibold text-lg text-gray-900 mb-2">
+              {status === "processing" ? "Check your phone" : "Verifying payment..."}
+            </p>
+            <p className="text-sm text-gray-600">
+              {status === "processing"
+                ? "Enter your M-Pesa PIN to complete payment"
+                : "Please wait while we confirm your payment"}
+            </p>
           </div>
         )}
 
@@ -265,7 +332,7 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
               </svg>
             </div>
             <p className="font-bold text-xl text-red-600 mb-2">Payment Failed</p>
-            <p className="text-sm text-gray-600 mb-4">Please try again or contact support</p>
+            <p className="text-sm text-gray-600 mb-4">Payment not confirmed. Please try again or contact support</p>
             <Button onClick={onClose} className="bg-gray-600 hover:bg-gray-700">
               Close
             </Button>

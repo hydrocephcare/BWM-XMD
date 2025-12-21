@@ -5,28 +5,30 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Upload, Trash2, FileText, Database, LinkIcon, X } from "lucide-react"
+import { Upload, Trash2, FileText, Database, LinkIcon, X, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase"
 
 interface ProjectFile {
   id: string
-  name: string
-  type: "word" | "access"
-  url: string
+  batch_name: string
+  file_name: string
+  file_type: string
+  file_url: string
   price: number
-  batch: number
-  isExternalLink?: boolean
+  is_external_link: boolean
 }
 
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<ProjectFile[]>([])
+  const [loading, setLoading] = useState(true)
   const [showUpload, setShowUpload] = useState(false)
   const [uploadMethod, setUploadMethod] = useState<"file" | "link">("file")
   const [uploadForm, setUploadForm] = useState({
     name: "",
-    type: "word" as "word" | "access",
+    type: "Word" as "Word" | "Access",
     price: 50,
-    batch: 1,
+    batch: "Batch 1",
     file: null as File | null,
     externalLink: "",
   })
@@ -36,16 +38,21 @@ export default function AdminProjectsPage() {
     loadProjects()
   }, [])
 
-  const loadProjects = () => {
-    const saved = localStorage.getItem("projectFiles")
-    if (saved) {
-      setProjects(JSON.parse(saved))
-    }
-  }
+  const loadProjects = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.from("projects").select("*").order("batch_name", { ascending: true })
 
-  const saveProjects = (newProjects: ProjectFile[]) => {
-    localStorage.setItem("projectFiles", JSON.stringify(newProjects))
-    setProjects(newProjects)
+      if (error) {
+        console.error("[v0] Error loading projects:", error)
+      } else {
+        setProjects(data || [])
+      }
+    } catch (error) {
+      console.error("[v0] Failed to load projects:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleFileUpload = async (e: React.FormEvent) => {
@@ -72,6 +79,7 @@ export default function AdminProjectsPage() {
       let fileUrl = ""
 
       if (uploadMethod === "file" && uploadForm.file) {
+        console.log("[v0] Uploading file to blob storage...")
         const formData = new FormData()
         formData.append("file", uploadForm.file)
 
@@ -85,27 +93,43 @@ export default function AdminProjectsPage() {
           throw new Error("Upload failed")
         }
         fileUrl = data.url
+        console.log("[v0] File uploaded:", fileUrl)
       } else {
         fileUrl = uploadForm.externalLink
+        console.log("[v0] Using external link:", fileUrl)
       }
 
-      const newFile: ProjectFile = {
-        id: Date.now().toString(),
-        name: uploadForm.name,
-        type: uploadForm.type,
-        url: fileUrl,
-        price: uploadForm.price,
-        batch: uploadForm.batch,
-        isExternalLink: uploadMethod === "link",
+      // Insert into Supabase
+      const supabase = createClient()
+      const { data: insertedData, error: insertError } = await supabase
+        .from("projects")
+        .insert([
+          {
+            batch_name: uploadForm.batch,
+            file_name: uploadForm.name,
+            file_type: uploadForm.type,
+            price: uploadForm.price,
+            file_url: fileUrl,
+            is_external_link: uploadMethod === "link",
+          },
+        ])
+        .select()
+
+      if (insertError) {
+        console.error("[v0] Database error:", insertError)
+        throw insertError
       }
 
-      saveProjects([...projects, newFile])
+      console.log("[v0] Project saved to database:", insertedData)
+
+      // Reload projects
+      await loadProjects()
 
       setUploadForm({
         name: "",
-        type: "word",
+        type: "Word",
         price: 50,
-        batch: 1,
+        batch: "Batch 1",
         file: null,
         externalLink: "",
       })
@@ -113,19 +137,41 @@ export default function AdminProjectsPage() {
       alert("File added successfully!")
     } catch (error) {
       alert("Upload failed. Please try again.")
-      console.error(error)
+      console.error("[v0] Upload error:", error)
     } finally {
       setUploading(false)
     }
   }
 
-  const deleteFile = (id: string) => {
-    if (confirm("Are you sure you want to delete this file?")) {
-      saveProjects(projects.filter((p) => p.id !== id))
+  const deleteFile = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this file?")) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from("projects").delete().eq("id", id)
+
+      if (error) {
+        console.error("[v0] Delete error:", error)
+        throw error
+      }
+
+      console.log("[v0] Project deleted from database")
+      await loadProjects()
+    } catch (error) {
+      alert("Failed to delete file")
+      console.error("[v0] Delete error:", error)
     }
   }
 
-  const batches = [...new Set(projects.map((p) => p.batch))].sort()
+  const batches = [...new Set(projects.map((p) => p.batch_name))].sort()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -199,11 +245,11 @@ export default function AdminProjectsPage() {
                   <label className="block text-sm font-medium mb-2">File Type *</label>
                   <select
                     value={uploadForm.type}
-                    onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value as "word" | "access" })}
+                    onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value as "Word" | "Access" })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="word">Microsoft Word</option>
-                    <option value="access">Microsoft Access</option>
+                    <option value="Word">Microsoft Word</option>
+                    <option value="Access">Microsoft Access</option>
                   </select>
                 </div>
 
@@ -219,12 +265,12 @@ export default function AdminProjectsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Batch Number *</label>
+                  <label className="block text-sm font-medium mb-2">Batch *</label>
                   <Input
-                    type="number"
+                    type="text"
                     value={uploadForm.batch}
-                    onChange={(e) => setUploadForm({ ...uploadForm, batch: Number.parseInt(e.target.value) })}
-                    min="1"
+                    onChange={(e) => setUploadForm({ ...uploadForm, batch: e.target.value })}
+                    placeholder="Batch 1"
                     required
                   />
                 </div>
@@ -279,33 +325,33 @@ export default function AdminProjectsPage() {
             batches.map((batch) => (
               <div key={batch}>
                 <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">Batch {batch}</span>
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">{batch}</span>
                   <span className="text-sm text-gray-500 font-normal">
-                    ({projects.filter((p) => p.batch === batch).length} files)
+                    ({projects.filter((p) => p.batch_name === batch).length} files)
                   </span>
                 </h2>
                 <div className="grid gap-4">
                   {projects
-                    .filter((p) => p.batch === batch)
+                    .filter((p) => p.batch_name === batch)
                     .map((file) => (
                       <Card key={file.id} className="p-6 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4 flex-1">
                             <div className="p-3 bg-blue-100 rounded-lg">
-                              {file.type === "word" ? (
+                              {file.file_type === "Word" ? (
                                 <FileText className="w-6 h-6 text-blue-600" />
                               ) : (
                                 <Database className="w-6 h-6 text-blue-600" />
                               )}
                             </div>
                             <div className="flex-1">
-                              <h3 className="font-semibold text-lg text-gray-900">{file.name}</h3>
+                              <h3 className="font-semibold text-lg text-gray-900">{file.file_name}</h3>
                               <div className="flex items-center gap-3 mt-1">
                                 <span className="text-sm text-gray-500">
-                                  {file.type === "word" ? "Word Document" : "Access Database"}
+                                  {file.file_type === "Word" ? "Word Document" : "Access Database"}
                                 </span>
                                 <span className="text-sm font-medium text-blue-600">KES {file.price}</span>
-                                {file.isExternalLink && (
+                                {file.is_external_link && (
                                   <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
                                     External Link
                                   </span>
