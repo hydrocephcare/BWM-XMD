@@ -173,7 +173,7 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
   const [phone, setPhone] = useState("")
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<"idle" | "processing" | "checking" | "success" | "error">("idle")
-  const [paymentReference, setPaymentReference] = useState("")
+  const [paymentId, setPaymentId] = useState("")
 
   const handlePayment = async () => {
     if (!phone || phone.length < 10) {
@@ -202,11 +202,11 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
       const data = await response.json()
       console.log("[v0] Payment response:", data)
 
-      if (data.status === "success" && data.reference) {
-        setPaymentReference(data.reference)
+      if (data.status === "success" && data.payment_id) {
+        setPaymentId(data.payment_id)
         setStatus("checking")
-        // Start checking payment status
-        checkPaymentStatus(data.reference)
+        // Start checking payment status by payment_id
+        checkPaymentStatus(data.payment_id)
       } else {
         setStatus("error")
         setLoading(false)
@@ -218,8 +218,8 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
     }
   }
 
-  const checkPaymentStatus = async (reference: string) => {
-    const maxAttempts = 30 // Check for up to 60 seconds
+  const checkPaymentStatus = async (paymentId: string) => {
+    const maxAttempts = 40 // Check for up to 80 seconds (40 * 2 seconds)
     let attempts = 0
 
     const checkInterval = setInterval(async () => {
@@ -228,22 +228,37 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
 
       try {
         const supabase = createClient()
-        const { data, error } = await supabase.from("payments").select("*").eq("transaction_id", reference).single()
+        const { data, error } = await supabase
+          .from("payments")
+          .select("payment_status")
+          .eq("id", paymentId)
+          .single()
 
         if (error) {
-          console.log("[v0] Payment not found yet:", error)
-        } else if (data && data.payment_status === "completed") {
-          console.log("[v0] Payment successful!")
-          clearInterval(checkInterval)
-          setStatus("success")
-          setLoading(false)
+          console.log("[v0] Payment check error:", error)
+        } else if (data) {
+          console.log("[v0] Payment status:", data.payment_status)
+          
+          // Check for "success" status (what your callback sets)
+          if (data.payment_status === "success") {
+            console.log("[v0] Payment successful!")
+            clearInterval(checkInterval)
+            setStatus("success")
+            setLoading(false)
 
-          // Download file after 2 seconds
-          setTimeout(() => {
-            window.open(file.file_url, "_blank")
-            onClose()
-          }, 2000)
-          return
+            // Download file after 2 seconds
+            setTimeout(() => {
+              window.open(file.file_url, "_blank")
+              onClose()
+            }, 2000)
+            return
+          } else if (data.payment_status === "failed") {
+            console.log("[v0] Payment failed")
+            clearInterval(checkInterval)
+            setStatus("error")
+            setLoading(false)
+            return
+          }
         }
       } catch (error) {
         console.error("[v0] Error checking payment:", error)
@@ -253,7 +268,7 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
         clearInterval(checkInterval)
         setStatus("error")
         setLoading(false)
-        console.log("[v0] Payment check timeout")
+        console.log("[v0] Payment check timeout - payment may still be processing")
       }
     }, 2000) // Check every 2 seconds
   }
@@ -309,6 +324,9 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
                 ? "Enter your M-Pesa PIN to complete payment"
                 : "Please wait while we confirm your payment"}
             </p>
+            {status === "checking" && (
+              <p className="text-xs text-gray-400 mt-3">Payment ID: {paymentId}</p>
+            )}
           </div>
         )}
 
