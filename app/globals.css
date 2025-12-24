@@ -236,7 +236,6 @@
   }
 }
 
-/* Custom utility classes for navy and gold colors */
 @layer components {
   .text-navy-50 {
     color: var(--navy-50);
@@ -422,6 +421,22 @@
   }
   .border-gold-900 {
     border-color: var(--gold-900);
+  }
+}
+
+@layer utilities {
+  /* Additional smooth scroll and transition utilities */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Custom animation utilities */
+  .animate-in {
+    @apply animate-fadeIn;
   }
 }
 
