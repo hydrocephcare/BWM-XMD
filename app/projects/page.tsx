@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Download, FileText, Database, ExternalLink, Loader2 } from "lucide-react"
+import { Download, FileText, Database, ExternalLink, Loader2, ArrowRight, Check } from "lucide-react"
 import { createClient } from "@/lib/supabase"
 
 interface ProjectFile {
@@ -53,79 +53,119 @@ export default function ProjectsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12">
-      <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">KCSE Project Files</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Browse and download high-quality KCSE project files. Pay securely via M-Pesa and get instant access.
-          </p>
-        </div>
-
-        {batches.length === 0 ? (
-          <Card className="p-12 text-center max-w-2xl mx-auto">
-            <div className="mb-4">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-b from-background to-card border-b border-border">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+          <div className="max-w-3xl">
+            <div className="inline-block mb-4">
+              <span className="text-xs sm:text-sm font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary">
+                PROJECT FILES
+              </span>
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Projects Available Yet</h3>
-            <p className="text-gray-500">Check back soon for new project files!</p>
-          </Card>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
+              Download Your <span className="text-primary">KCSE Project</span> Files
+            </h1>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
+              Access high-quality, professionally crafted project files. Pay securely via M-Pesa and download instantly.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+        {batches.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 md:py-24">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
+              <FileText className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-2">No Projects Available Yet</h3>
+            <p className="text-muted-foreground text-center max-w-sm">
+              Check back soon! We're preparing premium KCSE project files for you.
+            </p>
+          </div>
         ) : (
-          <div className="space-y-12">
-            {batches.map((batch) => (
+          <div className="space-y-16 md:space-y-20">
+            {batches.map((batch, batchIndex) => (
               <div key={batch}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-1 w-12 bg-blue-600 rounded"></div>
-                  <h2 className="text-2xl font-bold text-gray-900">{batch}</h2>
-                  <div className="h-1 flex-1 bg-gray-200 rounded"></div>
+                <div className="mb-8 md:mb-12">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      <span className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+                        {batchIndex + 1}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-2xl md:text-3xl font-bold text-foreground">{batch}</h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {projects.filter((p) => p.batch_name === batch).length} file
+                        {projects.filter((p) => p.batch_name === batch).length !== 1 ? "s" : ""} available
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                   {projects
                     .filter((p) => p.batch_name === batch)
                     .map((file) => (
                       <Card
                         key={file.id}
-                        className="p-6 hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200"
+                        className="group flex flex-col h-full p-6 hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20 bg-card"
                       >
-                        <div className="flex items-start gap-4 mb-4">
-                          <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
+                        {/* File Icon */}
+                        <div className="mb-6">
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                             {file.file_type === "Word" ? (
-                              <FileText className="w-7 h-7 text-white" />
+                              <FileText className="w-6 h-6 text-primary" />
                             ) : (
-                              <Database className="w-7 h-7 text-white" />
+                              <Database className="w-6 h-6 text-primary" />
                             )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-gray-900 mb-1 leading-tight">{file.file_name}</h3>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                                {file.file_type === "Word" ? "Word Document" : "Access Database"}
-                              </span>
-                              {file.is_external_link && <ExternalLink className="w-3 h-3 text-gray-400" />}
-                            </div>
                           </div>
                         </div>
 
-                        <div className="border-t pt-4 mt-4">
-                          <div className="flex items-center justify-between">
+                        {/* File Info */}
+                        <div className="flex-1 mb-6">
+                          <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                            {file.file_name}
+                          </h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-md bg-primary/10 text-primary">
+                              {file.file_type === "Word" ? "📄 Word" : "🗄️ Database"}
+                            </span>
+                            {file.is_external_link && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-md bg-muted text-muted-foreground">
+                                <ExternalLink className="w-3 h-3" />
+                                Link
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Price and CTA */}
+                        <div className="border-t border-border pt-6 mt-auto">
+                          <div className="flex items-center justify-between gap-4">
                             <div>
-                              <p className="text-xs text-gray-500 mb-1">Price</p>
-                              <span className="text-2xl font-bold text-blue-600">KES {file.price}</span>
+                              <p className="text-xs text-muted-foreground mb-1 font-medium">Price</p>
+                              <p className="text-2xl font-bold text-foreground">
+                                KES <span className="text-primary">{file.price.toLocaleString()}</span>
+                              </p>
                             </div>
                             <Button
-                              size="lg"
                               onClick={() => handleDownload(file)}
-                              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 gap-2 shadow-md"
+                              className="flex-shrink-0 px-6 gap-2 group/btn"
+                              size="lg"
                             >
-                              <Download className="w-4 h-4" />
-                              Download
+                              <Download className="w-4 h-4 group-hover/btn:animate-pulse" />
+                              <span className="hidden sm:inline">Download</span>
                             </Button>
                           </div>
                         </div>
@@ -137,31 +177,42 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        <div className="mt-12 text-center">
-          <Card className="p-6 max-w-2xl mx-auto bg-blue-50 border-blue-200">
-            <h3 className="font-bold text-gray-900 mb-2">How It Works</h3>
-            <ol className="text-left text-sm text-gray-700 space-y-2">
-              <li className="flex gap-2">
-                <span className="font-bold text-blue-600">1.</span>
-                <span>Choose the project file you want to download</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-bold text-blue-600">2.</span>
-                <span>Click "Download" and enter your M-Pesa phone number</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-bold text-blue-600">3.</span>
-                <span>Complete payment via STK push on your phone</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-bold text-blue-600">4.</span>
-                <span>Download begins automatically after successful payment</span>
-              </li>
-            </ol>
-          </Card>
-        </div>
+        {/* Process Steps - Shows only when projects exist */}
+        {batches.length > 0 && (
+          <div className="mt-16 md:mt-24 pt-16 md:pt-24 border-t border-border">
+            <div className="mb-12 text-center">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">How It Works</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Simple, secure payment process to get your project files instantly
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+              {[
+                { number: "01", title: "Select File", description: "Choose the project file you need" },
+                { number: "02", title: "Enter Phone", description: "Provide your M-Pesa number" },
+                { number: "03", title: "Confirm Payment", description: "Complete STK push on your phone" },
+                { number: "04", title: "Download Now", description: "Get instant access to your file" },
+              ].map((step, idx) => (
+                <div key={idx} className="relative">
+                  <div className="p-6 rounded-lg bg-card border border-border">
+                    <div className="text-3xl font-bold text-primary mb-3">{step.number}</div>
+                    <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                  </div>
+                  {idx < 3 && (
+                    <div className="hidden lg:flex absolute top-1/2 -right-4 transform -translate-y-1/2">
+                      <ArrowRight className="w-6 h-6 text-border" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Payment Modal */}
       {paymentModal.show && paymentModal.file && (
         <PaymentModal file={paymentModal.file} onClose={() => setPaymentModal({ show: false, file: null })} />
       )}
@@ -205,7 +256,6 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
       if (data.status === "success" && data.reference) {
         setPaymentReference(data.reference)
         setStatus("checking")
-        // Start checking payment status
         checkPaymentStatus(data.reference)
       } else {
         setStatus("error")
@@ -219,7 +269,7 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
   }
 
   const checkPaymentStatus = async (reference: string) => {
-    const maxAttempts = 30 // Check for up to 60 seconds
+    const maxAttempts = 30
     let attempts = 0
 
     const checkInterval = setInterval(async () => {
@@ -238,7 +288,6 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
           setStatus("success")
           setLoading(false)
 
-          // Download file after 2 seconds
           setTimeout(() => {
             window.open(file.file_url, "_blank")
             onClose()
@@ -255,43 +304,43 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
         setLoading(false)
         console.log("[v0] Payment check timeout")
       }
-    }, 2000) // Check every 2 seconds
+    }, 2000)
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <Card className="w-full max-w-md p-6 shadow-2xl">
-        <h2 className="text-2xl font-bold mb-4">Complete Payment</h2>
+      <Card className="w-full max-w-md p-6 md:p-8 shadow-2xl">
+        <h2 className="text-2xl font-bold text-foreground mb-6">Complete Payment</h2>
 
         {status === "idle" && (
           <>
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">File:</p>
-              <p className="font-semibold text-gray-900">{file.file_name}</p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-blue-200">
-                <span className="text-sm text-gray-600">Amount to Pay:</span>
-                <span className="text-2xl font-bold text-blue-600">KES {file.price}</span>
+            <div className="mb-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-xs font-medium text-muted-foreground mb-2">File</p>
+              <p className="font-semibold text-foreground mb-4">{file.file_name}</p>
+              <div className="flex items-center justify-between pt-3 border-t border-primary/20">
+                <span className="text-sm text-muted-foreground">Amount to Pay</span>
+                <span className="text-2xl font-bold text-primary">KES {file.price.toLocaleString()}</span>
               </div>
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-semibold mb-2 text-gray-700">M-Pesa Phone Number</label>
+              <label className="block text-sm font-semibold text-foreground mb-2">M-Pesa Phone Number</label>
               <input
                 type="tel"
                 placeholder="07XXXXXXXX or 01XXXXXXXX"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
                 maxLength={10}
               />
-              <p className="text-xs text-gray-500 mt-2">Enter your Safaricom number to receive STK push</p>
+              <p className="text-xs text-muted-foreground mt-2">Enter your Safaricom number to receive STK push</p>
             </div>
 
             <div className="flex gap-3">
               <Button onClick={onClose} variant="outline" className="flex-1 bg-transparent">
                 Cancel
               </Button>
-              <Button onClick={handlePayment} disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handlePayment} disabled={loading} className="flex-1">
                 {loading ? "Processing..." : "Pay Now"}
               </Button>
             </div>
@@ -299,12 +348,12 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
         )}
 
         {(status === "processing" || status === "checking") && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
-            <p className="font-semibold text-lg text-gray-900 mb-2">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-16 w-16 border-2 border-border border-t-primary mx-auto mb-6"></div>
+            <p className="font-semibold text-lg text-foreground mb-2">
               {status === "processing" ? "Check your phone" : "Verifying payment..."}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {status === "processing"
                 ? "Enter your M-Pesa PIN to complete payment"
                 : "Please wait while we confirm your payment"}
@@ -313,27 +362,27 @@ function PaymentModal({ file, onClose }: { file: ProjectFile; onClose: () => voi
         )}
 
         {status === "success" && (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <Check className="w-8 h-8 text-primary" />
             </div>
-            <p className="font-bold text-xl text-green-600 mb-2">Payment Successful!</p>
-            <p className="text-sm text-gray-600">Downloading file now...</p>
+            <p className="font-bold text-xl text-foreground mb-2">Payment Successful!</p>
+            <p className="text-sm text-muted-foreground">Downloading file now...</p>
           </div>
         )}
 
         {status === "error" && (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <p className="font-bold text-xl text-red-600 mb-2">Payment Failed</p>
-            <p className="text-sm text-gray-600 mb-4">Payment not confirmed. Please try again or contact support</p>
-            <Button onClick={onClose} className="bg-gray-600 hover:bg-gray-700">
+            <p className="font-bold text-xl text-foreground mb-2">Payment Failed</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Payment not confirmed. Please try again or contact support
+            </p>
+            <Button onClick={onClose} variant="outline" className="w-full bg-transparent">
               Close
             </Button>
           </div>
