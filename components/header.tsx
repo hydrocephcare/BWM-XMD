@@ -22,6 +22,11 @@ export function Header() {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
   const closeMenu = () => setIsMenuOpen(false)
 
+  const handleNavClick = () => {
+    closeMenu()
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   return (
     <header
       className={cn(
@@ -41,26 +46,52 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
+            <Link
+              href="/"
+              className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors"
+              onClick={handleNavClick}
+            >
               Home
             </Link>
-            <Link href="/about" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
+            <Link
+              href="/about"
+              className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors"
+              onClick={handleNavClick}
+            >
               About Us
             </Link>
-            <Link href="/projects" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
+            <Link
+              href="/projects"
+              className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors"
+              onClick={handleNavClick}
+            >
               Projects
             </Link>
-            <Link href="/contact" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
+            <Link
+              href="/contact"
+              className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors"
+              onClick={handleNavClick}
+            >
               Contact Us
             </Link>
-            <Link href="/#download" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
+            <Link
+              href="/#download"
+              className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors"
+              onClick={handleNavClick}
+            >
               Download Projects
             </Link>
-            <Link href="/blogs" className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors">
+            <Link
+              href="/blogs"
+              className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors"
+              onClick={handleNavClick}
+            >
               Blogs
             </Link>
             <Button asChild className="ml-4 bg-navy-600 hover:bg-navy-700">
-              <Link href="/#download">Download Now</Link>
+              <Link href="/#download" onClick={handleNavClick}>
+                Download Now
+              </Link>
             </Button>
           </nav>
 
@@ -80,54 +111,54 @@ export function Header() {
             <Link
               href="/"
               className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
+              onClick={handleNavClick}
             >
               Home
             </Link>
             <Link
               href="/about"
               className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
+              onClick={handleNavClick}
             >
               About Us
             </Link>
             <Link
               href="/projects"
               className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
+              onClick={handleNavClick}
             >
               Projects
             </Link>
             <Link
               href="/contact"
               className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
+              onClick={handleNavClick}
             >
               Contact Us
             </Link>
             <Link
               href="/#download"
               className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
+              onClick={handleNavClick}
             >
               Download Projects
             </Link>
             <Link
               href="/blogs"
               className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
+              onClick={handleNavClick}
             >
               Blogs
             </Link>
             <Link
               href="/admin"
               className="text-sm font-medium text-gray-700 hover:text-navy-600 transition-colors py-2"
-              onClick={closeMenu}
+              onClick={handleNavClick}
             >
               Admin
             </Link>
             <Button asChild className="w-full bg-navy-600 hover:bg-navy-700 mt-2">
-              <Link href="/#download" onClick={closeMenu}>
+              <Link href="/#download" onClick={handleNavClick}>
                 Download Now
               </Link>
             </Button>
