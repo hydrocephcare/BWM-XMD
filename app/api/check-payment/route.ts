@@ -9,10 +9,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Reference required" }, { status: 400 })
     }
 
-    // Check payment status via PHP callback or Supabase
-    const supabaseUrl = "https://mcglwbcsyvtbmuegfamt.supabase.co"
-    const supabaseKey =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jZ2x3YmNzeXZ0Ym11ZWdmYW10Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDM1OTU5OSwiZXhwIjoyMDc5OTM1NTk5fQ.dhwCXxARbhpAaAoMS71lwRzaWrqohX0_nK4kSh9XNFo"
+    // Use environment variables instead of hardcoded values
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const response = await fetch(`${supabaseUrl}/rest/v1/payments?external_reference=eq.${reference}`, {
       headers: {
