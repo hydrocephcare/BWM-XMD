@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { FileText, Database, Download, Loader2, CheckCircle2, ShoppingCart, X } from "lucide-react"
+import { FileText, Database, Download, Loader2, CheckCircle2, ShoppingCart, X, Eye, ChevronLeft, ChevronRight } from "lucide-react"
 import { createClient } from "@/lib/supabase"
+
+interface ProjectImage {
+  id: string
+  image_url: string
+  image_order: number
+}
 
 interface Project {
   id: string
@@ -14,6 +20,7 @@ interface Project {
   file_url: string
   price: number
   is_external_link: boolean
+  images?: ProjectImage[]
 }
 
 interface BatchFiles {
@@ -35,6 +42,11 @@ export function ProjectsContent() {
     show: false,
     paymentInfo: null,
   })
+  const [previewModal, setPreviewModal] = useState<{ show: boolean; project: Project | null; currentIndex: number }>({
+    show: false,
+    project: null,
+    currentIndex: 0,
+  })
 
   useEffect(() => {
     loadProjects()
@@ -43,16 +55,30 @@ export function ProjectsContent() {
   const loadProjects = async () => {
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
+      
+      // Load projects with their images
+      const { data: projectsData, error: projectsError } = await supabase
         .from("projects")
         .select("*")
         .order("batch_name", { ascending: true })
 
-      if (error) {
-        console.error("Error loading projects:", error)
-      } else {
-        setProjects(data || [])
-      }
+      if (projectsError) throw projectsError
+
+      // Load images for all projects
+      const { data: imagesData, error: imagesError } = await supabase
+        .from("project_images")
+        .select("*")
+        .order("image_order", { ascending: true })
+
+      if (imagesError) throw imagesError
+
+      // Combine projects with their images
+      const projectsWithImages = (projectsData || []).map(project => ({
+        ...project,
+        images: (imagesData || []).filter(img => img.project_id === project.id)
+      }))
+
+      setProjects(projectsWithImages)
     } catch (error) {
       console.error("Failed to load projects:", error)
     } finally {
@@ -109,6 +135,36 @@ export function ProjectsContent() {
     }
   }
 
+  const openPreview = (project: Project) => {
+    if (project.images && project.images.length > 0) {
+      setPreviewModal({ show: true, project, currentIndex: 0 })
+    }
+  }
+
+  const closePreview = () => {
+    setPreviewModal({ show: false, project: null, currentIndex: 0 })
+  }
+
+  const nextImage = () => {
+    if (previewModal.project && previewModal.project.images) {
+      const maxIndex = previewModal.project.images.length - 1
+      setPreviewModal(prev => ({
+        ...prev,
+        currentIndex: prev.currentIndex < maxIndex ? prev.currentIndex + 1 : 0
+      }))
+    }
+  }
+
+  const prevImage = () => {
+    if (previewModal.project && previewModal.project.images) {
+      const maxIndex = previewModal.project.images.length - 1
+      setPreviewModal(prev => ({
+        ...prev,
+        currentIndex: prev.currentIndex > 0 ? prev.currentIndex - 1 : maxIndex
+      }))
+    }
+  }
+
   const batchedProjects = getBatchedProjects()
   const batches = ["all", ...Object.keys(batchedProjects)].sort()
   const filteredBatches = selectedBatch === "all" ? Object.keys(batchedProjects).sort() : [selectedBatch]
@@ -116,7 +172,7 @@ export function ProjectsContent() {
 
   if (loading) {
     return (
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
         <div className="container mx-auto px-4 py-16">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -131,240 +187,169 @@ export function ProjectsContent() {
 
   return (
     <>
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
         <div className="container mx-auto px-4 py-8 md:py-12">
           {/* Header Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <div className="text-center mb-8 animate-fade-in">
+            <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
               KCSE Computer Studies Projects
             </h1>
-            <p className="text-base text-gray-600">
+            <p className="text-base md:text-lg text-gray-600">
               {isAllBatches ? "Browse all available projects" : `Viewing ${selectedBatch} projects`}
             </p>
           </div>
 
           {/* Batch Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <div className="flex flex-wrap justify-center gap-2 mb-8 animate-slide-up">
             {batches.map((batch) => (
               <Button
                 key={batch}
                 onClick={() => setSelectedBatch(batch)}
                 variant={selectedBatch === batch ? "default" : "outline"}
                 size="sm"
-                className={selectedBatch === batch ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-gray-100"}
+                className={`transition-all duration-300 ${
+                  selectedBatch === batch 
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg scale-105" 
+                    : "hover:bg-gray-100 hover:scale-105"
+                }`}
               >
                 {batch === "all" ? "All Batches" : batch}
               </Button>
             ))}
           </div>
 
-          {/* ALL BATCHES VIEW - Table/Compact Format */}
+          {/* ALL BATCHES VIEW - Compact Cards */}
           {isAllBatches && (
-            <>
-              {/* Desktop Table */}
-              <div className="hidden lg:block bg-white rounded-lg shadow-md overflow-hidden mb-8">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-sm font-semibold">Batch</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold">Project Name</th>
-                        <th className="px-6 py-4 text-center text-sm font-semibold">
-                          <div className="flex items-center justify-center gap-2">
-                            <FileText className="w-4 h-4" />
-                            Documentation
-                          </div>
-                        </th>
-                        <th className="px-6 py-4 text-center text-sm font-semibold">
-                          <div className="flex items-center justify-center gap-2">
-                            <Database className="w-4 h-4" />
-                            Database
-                          </div>
-                        </th>
-                        <th className="px-6 py-4 text-center text-sm font-semibold">
-                          <div className="flex items-center justify-center gap-2">
-                            <ShoppingCart className="w-4 h-4" />
-                            Complete Package
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredBatches.map((batchName, idx) => {
-                        const batchFiles = batchedProjects[batchName]
-                        const hasDoc = !!batchFiles.documentation
-                        const hasDb = !!batchFiles.database
-                        const hasBoth = hasDoc && hasDb
+            <div className="space-y-4 mb-8">
+              {filteredBatches.map((batchName, idx) => {
+                const batchFiles = batchedProjects[batchName]
+                const hasDoc = !!batchFiles.documentation
+                const hasDb = !!batchFiles.database
+                const hasBoth = hasDoc && hasDb
 
-                        return (
-                          <tr key={batchName} className={`hover:bg-blue-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                            <td className="px-6 py-4">
-                              <span className="inline-block px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-xs font-bold shadow-sm">
-                                {batchName}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="font-semibold text-gray-900 text-sm">
-                                {batchFiles.documentation?.file_name || batchFiles.database?.file_name || "Project"}
-                              </p>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              {hasDoc ? (
-                                <div className="flex flex-col items-center gap-2">
-                                  <span className="text-base font-bold text-blue-600">KES {batchFiles.documentation?.price}</span>
-                                  <Button
-                                    onClick={() => handleDownload("documentation", batchFiles)}
-                                    size="sm"
-                                    className="bg-blue-600 hover:bg-blue-700 text-xs px-4 py-1.5 h-8 shadow-sm"
-                                  >
-                                    <Download className="w-3 h-3 mr-1" />
-                                    Get
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-sm">—</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              {hasDb ? (
-                                <div className="flex flex-col items-center gap-2">
-                                  <span className="text-base font-bold text-purple-600">KES {batchFiles.database?.price}</span>
-                                  <Button
-                                    onClick={() => handleDownload("database", batchFiles)}
-                                    size="sm"
-                                    className="bg-purple-600 hover:bg-purple-700 text-xs px-4 py-1.5 h-8 shadow-sm"
-                                  >
-                                    <Download className="w-3 h-3 mr-1" />
-                                    Get
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-sm">—</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              {hasBoth ? (
-                                <div className="flex flex-col items-center gap-2">
-                                  <div className="flex flex-col items-center">
-                                    <span className="text-base font-bold text-green-600">
-                                      KES {(batchFiles.documentation?.price || 0) + (batchFiles.database?.price || 0)}
-                                    </span>
-                                    <span className="text-xs text-green-600 font-semibold">BEST VALUE</span>
-                                  </div>
-                                  <Button
-                                    onClick={() => handleDownload("both", batchFiles)}
-                                    size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-xs px-4 py-1.5 h-8 shadow-sm"
-                                  >
-                                    <ShoppingCart className="w-3 h-3 mr-1" />
-                                    Buy Both
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-sm">—</span>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Mobile/Tablet Cards for All Batches */}
-              <div className="lg:hidden space-y-3 mb-8">
-                {filteredBatches.map((batchName) => {
-                  const batchFiles = batchedProjects[batchName]
-                  const hasDoc = !!batchFiles.documentation
-                  const hasDb = !!batchFiles.database
-                  const hasBoth = hasDoc && hasDb
-
-                  return (
-                    <Card key={batchName} className="bg-white shadow-md overflow-hidden border-l-4 border-blue-500">
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="inline-block px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-xs font-bold">
+                return (
+                  <Card 
+                    key={batchName} 
+                    className="bg-white shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-l-4 border-blue-500 animate-slide-in"
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                  >
+                    <div className="p-6">
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        {/* Left Side - Batch Info */}
+                        <div className="lg:w-1/3">
+                          <span className="inline-block px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-bold mb-3 shadow-md">
                             {batchName}
                           </span>
+                          <h3 className="font-bold text-gray-900 text-xl mb-2">
+                            {batchFiles.documentation?.file_name || batchFiles.database?.file_name || "Project"}
+                          </h3>
+                          
+                          {/* Preview Thumbnails */}
+                          {(batchFiles.documentation?.images || batchFiles.database?.images) && (
+                            <div className="flex gap-2 mt-4">
+                              {(batchFiles.documentation?.images || batchFiles.database?.images)?.slice(0, 3).map((img, i) => (
+                                <div 
+                                  key={i}
+                                  className="w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-all"
+                                  onClick={() => openPreview(batchFiles.documentation || batchFiles.database!)}
+                                >
+                                  <img src={img.image_url} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
-                        <h3 className="font-bold text-gray-900 text-base mb-4">
-                          {batchFiles.documentation?.file_name || batchFiles.database?.file_name || "Project"}
-                        </h3>
-
-                        <div className="space-y-2">
+                        {/* Right Side - Purchase Options */}
+                        <div className="lg:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-4">
                           {hasDoc && (
-                            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-blue-600" />
-                                <div>
-                                  <p className="text-xs font-medium text-gray-700">Documentation</p>
-                                  <p className="text-sm font-bold text-blue-600">KES {batchFiles.documentation?.price}</p>
-                                </div>
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-md">
+                              <FileText className="w-6 h-6 text-blue-600 mb-2" />
+                              <p className="text-xs font-medium text-gray-700 mb-1">Documentation</p>
+                              <p className="text-xl font-bold text-blue-600 mb-3">KES {batchFiles.documentation?.price}</p>
+                              <div className="space-y-2">
+                                {batchFiles.documentation?.images && batchFiles.documentation.images.length > 0 && (
+                                  <Button
+                                    onClick={() => openPreview(batchFiles.documentation!)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full text-xs"
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    Preview
+                                  </Button>
+                                )}
+                                <Button
+                                  onClick={() => handleDownload("documentation", batchFiles)}
+                                  size="sm"
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-xs shadow-sm"
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Get Now
+                                </Button>
                               </div>
-                              <Button
-                                onClick={() => handleDownload("documentation", batchFiles)}
-                                size="sm"
-                                className="bg-blue-600 hover:bg-blue-700 text-xs px-3 h-8"
-                              >
-                                <Download className="w-3 h-3 mr-1" />
-                                Get
-                              </Button>
                             </div>
                           )}
 
                           {hasDb && (
-                            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
-                              <div className="flex items-center gap-2">
-                                <Database className="w-4 h-4 text-purple-600" />
-                                <div>
-                                  <p className="text-xs font-medium text-gray-700">Database</p>
-                                  <p className="text-sm font-bold text-purple-600">KES {batchFiles.database?.price}</p>
-                                </div>
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 hover:shadow-md">
+                              <Database className="w-6 h-6 text-purple-600 mb-2" />
+                              <p className="text-xs font-medium text-gray-700 mb-1">Database</p>
+                              <p className="text-xl font-bold text-purple-600 mb-3">KES {batchFiles.database?.price}</p>
+                              <div className="space-y-2">
+                                {batchFiles.database?.images && batchFiles.database.images.length > 0 && (
+                                  <Button
+                                    onClick={() => openPreview(batchFiles.database!)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full text-xs"
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    Preview
+                                  </Button>
+                                )}
+                                <Button
+                                  onClick={() => handleDownload("database", batchFiles)}
+                                  size="sm"
+                                  className="w-full bg-purple-600 hover:bg-purple-700 text-xs shadow-sm"
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Get Now
+                                </Button>
                               </div>
-                              <Button
-                                onClick={() => handleDownload("database", batchFiles)}
-                                size="sm"
-                                className="bg-purple-600 hover:bg-purple-700 text-xs px-3 h-8"
-                              >
-                                <Download className="w-3 h-3 mr-1" />
-                                Get
-                              </Button>
                             </div>
                           )}
 
                           {hasBoth && (
-                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-2 border-green-400">
-                              <div className="flex items-center gap-2">
-                                <div className="flex">
-                                  <FileText className="w-3.5 h-3.5 text-green-600" />
-                                  <Database className="w-3.5 h-3.5 text-green-600 -ml-1" />
-                                </div>
-                                <div>
-                                  <p className="text-xs font-semibold text-green-700 uppercase">Best Value</p>
-                                  <p className="text-sm font-bold text-green-600">
-                                    KES {(batchFiles.documentation?.price || 0) + (batchFiles.database?.price || 0)}
-                                  </p>
-                                </div>
+                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-2 border-green-400 hover:border-green-500 transition-all duration-300 hover:shadow-md relative">
+                              <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                                SAVE
                               </div>
+                              <div className="flex gap-1 mb-2">
+                                <FileText className="w-5 h-5 text-green-600" />
+                                <Database className="w-5 h-5 text-green-600" />
+                              </div>
+                              <p className="text-xs font-semibold text-green-700 uppercase mb-1">Complete Package</p>
+                              <p className="text-xl font-bold text-green-600 mb-3">
+                                KES {(batchFiles.documentation?.price || 0) + (batchFiles.database?.price || 0)}
+                              </p>
                               <Button
                                 onClick={() => handleDownload("both", batchFiles)}
                                 size="sm"
-                                className="bg-green-600 hover:bg-green-700 text-xs px-3 h-8"
+                                className="w-full bg-green-600 hover:bg-green-700 text-xs shadow-sm"
                               >
                                 <ShoppingCart className="w-3 h-3 mr-1" />
-                                Buy
+                                Buy Both
                               </Button>
                             </div>
                           )}
                         </div>
                       </div>
-                    </Card>
-                  )
-                })}
-              </div>
-            </>
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
           )}
 
           {/* SINGLE BATCH VIEW - Large Cards Format */}
@@ -377,7 +362,7 @@ export function ProjectsContent() {
                 const hasBoth = hasDoc && hasDb
 
                 return (
-                  <div key={batchName}>
+                  <div key={batchName} className="animate-fade-in">
                     {/* Batch Header */}
                     <div className="flex items-center gap-4 mb-6">
                       <div className="h-1 w-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded"></div>
@@ -389,13 +374,33 @@ export function ProjectsContent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {/* Documentation Card */}
                       {hasDoc && (
-                        <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-blue-200 hover:border-blue-400">
+                        <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-blue-200 hover:border-blue-400 hover:scale-105">
                           <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-bold uppercase tracking-wide">Documentation</span>
                               <FileText className="w-5 h-5" />
                             </div>
                           </div>
+
+                          {/* Image Gallery */}
+                          {batchFiles.documentation.images && batchFiles.documentation.images.length > 0 && (
+                            <div className="relative h-48 bg-gray-100 cursor-pointer group" onClick={() => openPreview(batchFiles.documentation!)}>
+                              <img 
+                                src={batchFiles.documentation.images[0].image_url} 
+                                alt="Preview" 
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                                <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                              {batchFiles.documentation.images.length > 1 && (
+                                <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                                  +{batchFiles.documentation.images.length - 1} more
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           <div className="p-6">
                             <div className="text-center mb-6">
                               <p className="text-4xl font-bold text-blue-600 mb-2">
@@ -429,7 +434,7 @@ export function ProjectsContent() {
 
                             <Button
                               onClick={() => handleDownload("documentation", batchFiles)}
-                              className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-base font-semibold shadow-md"
+                              className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-base font-semibold shadow-md transition-all duration-300 hover:scale-105"
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Download Documentation
@@ -440,13 +445,33 @@ export function ProjectsContent() {
 
                       {/* Database Card */}
                       {hasDb && (
-                        <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-purple-200 hover:border-purple-400">
+                        <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-purple-200 hover:border-purple-400 hover:scale-105">
                           <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 text-white">
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-bold uppercase tracking-wide">Database</span>
                               <Database className="w-5 h-5" />
                             </div>
                           </div>
+
+                          {/* Image Gallery */}
+                          {batchFiles.database.images && batchFiles.database.images.length > 0 && (
+                            <div className="relative h-48 bg-gray-100 cursor-pointer group" onClick={() => openPreview(batchFiles.database!)}>
+                              <img 
+                                src={batchFiles.database.images[0].image_url} 
+                                alt="Preview" 
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                                <Eye className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                              {batchFiles.database.images.length > 1 && (
+                                <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                                  +{batchFiles.database.images.length - 1} more
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           <div className="p-6">
                             <div className="text-center mb-6">
                               <p className="text-4xl font-bold text-purple-600 mb-2">
@@ -480,7 +505,7 @@ export function ProjectsContent() {
 
                             <Button
                               onClick={() => handleDownload("database", batchFiles)}
-                              className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-semibold shadow-md"
+                              className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-semibold shadow-md transition-all duration-300 hover:scale-105"
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Download Database
@@ -491,8 +516,8 @@ export function ProjectsContent() {
 
                       {/* Complete Package Card */}
                       {hasBoth && (
-                        <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-green-400 hover:border-green-500 relative">
-                          <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-md z-10">
+                        <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-green-400 hover:border-green-500 relative hover:scale-105">
+                          <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-md z-10 animate-bounce">
                             SAVE MORE
                           </div>
                           <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-white">
@@ -504,6 +529,34 @@ export function ProjectsContent() {
                               </div>
                             </div>
                           </div>
+
+                          {/* Combined Image Preview */}
+                          {((batchFiles.documentation?.images && batchFiles.documentation.images.length > 0) || 
+                            (batchFiles.database?.images && batchFiles.database.images.length > 0)) && (
+                            <div className="grid grid-cols-2 h-48 gap-1 bg-gray-100">
+                              {batchFiles.documentation?.images && batchFiles.documentation.images[0] && (
+                                <div className="relative cursor-pointer group" onClick={() => openPreview(batchFiles.documentation!)}>
+                                  <img 
+                                    src={batchFiles.documentation.images[0].image_url} 
+                                    alt="Doc Preview" 
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300"></div>
+                                </div>
+                              )}
+                              {batchFiles.database?.images && batchFiles.database.images[0] && (
+                                <div className="relative cursor-pointer group" onClick={() => openPreview(batchFiles.database!)}>
+                                  <img 
+                                    src={batchFiles.database.images[0].image_url} 
+                                    alt="DB Preview" 
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300"></div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           <div className="p-6">
                             <div className="text-center mb-6">
                               <p className="text-4xl font-bold text-green-600 mb-2">
@@ -537,7 +590,7 @@ export function ProjectsContent() {
 
                             <Button
                               onClick={() => handleDownload("both", batchFiles)}
-                              className="w-full bg-green-600 hover:bg-green-700 h-12 text-base font-semibold shadow-md"
+                              className="w-full bg-green-600 hover:bg-green-700 h-12 text-base font-semibold shadow-md transition-all duration-300 hover:scale-105"
                             >
                               <ShoppingCart className="w-4 h-4 mr-2" />
                               Get Complete Package
@@ -553,258 +606,7 @@ export function ProjectsContent() {
           )}
 
           {/* Info Section */}
-          <div className="max-w-4xl mx-auto mt-12">
+          <div className="max-w-4xl mx-auto mt-12 animate-fade-in">
             <Card className="bg-white shadow-md p-6 border border-gray-200">
               <h2 className="text-xl font-bold text-gray-900 mb-4">What's Included</h2>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="flex gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Documentation</h3>
-                    <p className="text-gray-600">Complete Word documents with system analysis & design</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Database className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Database</h3>
-                    <p className="text-gray-600">Functional Access database with forms & reports</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">KCSE Ready</h3>
-                    <p className="text-gray-600">Meets all examination requirements</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Download className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Instant Access</h3>
-                    <p className="text-gray-600">Download immediately after M-Pesa payment</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </main>
-
-      {/* Payment Modal */}
-      {paymentModal.show && paymentModal.paymentInfo && (
-        <PaymentModal
-          paymentInfo={paymentModal.paymentInfo}
-          onClose={() => setPaymentModal({ show: false, paymentInfo: null })}
-        />
-      )}
-    </>
-  )
-}
-
-function PaymentModal({ paymentInfo, onClose }: { paymentInfo: PaymentInfo; onClose: () => void }) {
-  const [phone, setPhone] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState<"idle" | "processing" | "checking" | "success" | "error">("idle")
-
-  const handlePayment = async () => {
-    if (!phone || phone.length < 10) {
-      alert("Please enter a valid phone number")
-      return
-    }
-
-    setLoading(true)
-    setStatus("processing")
-
-    try {
-      const response = await fetch("/api/process-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone,
-          amount: paymentInfo.totalAmount,
-          donor_name: "Student",
-          payment_type: "project_file",
-          file_id: paymentInfo.files[0].id,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.status === "success" && data.reference) {
-        setStatus("checking")
-        checkPaymentStatus(data.reference)
-      } else {
-        setStatus("error")
-        setLoading(false)
-      }
-    } catch (error) {
-      console.error("Payment error:", error)
-      setStatus("error")
-      setLoading(false)
-    }
-  }
-
-  const checkPaymentStatus = async (reference: string) => {
-    const maxAttempts = 30
-    let attempts = 0
-
-    const checkInterval = setInterval(async () => {
-      attempts++
-
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase.from("payments").select("*").eq("transaction_id", reference).single()
-
-        if (!error && data && data.payment_status === "completed") {
-          clearInterval(checkInterval)
-          setStatus("success")
-          setLoading(false)
-
-          setTimeout(() => {
-            paymentInfo.files.forEach((file, index) => {
-              setTimeout(() => {
-                window.open(file.file_url, "_blank")
-              }, index * 500)
-            })
-
-            setTimeout(() => {
-              onClose()
-            }, paymentInfo.files.length * 500 + 1000)
-          }, 2000)
-          return
-        }
-      } catch (error) {
-        console.error("Error checking payment:", error)
-      }
-
-      if (attempts >= maxAttempts) {
-        clearInterval(checkInterval)
-        setStatus("error")
-        setLoading(false)
-      }
-    }, 2000)
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <Card className="w-full max-w-md shadow-2xl bg-white">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Complete Payment</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {status === "idle" && (
-            <>
-              <div className="mb-6 p-5 bg-blue-50 rounded-xl border border-blue-200">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Package</p>
-                    <p className="font-semibold text-gray-900 text-lg">{paymentInfo.packageType}</p>
-                  </div>
-                </div>
-
-                {paymentInfo.files.length > 1 && (
-                  <div className="space-y-2 mb-4 bg-white/60 rounded-lg p-3">
-                    {paymentInfo.files.map((file, idx) => (
-                      <div key={idx} className="flex items-center text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                        {file.file_name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-baseline justify-between pt-4 border-t border-blue-200">
-                  <span className="text-sm font-medium text-gray-600">Total Amount</span>
-                  <div className="text-3xl font-bold text-gray-900">KES {paymentInfo.totalAmount}</div>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-semibold mb-3 text-gray-900">
-                  M-Pesa Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                    <span className="text-gray-400 font-medium">+254</span>
-                    <div className="w-px h-6 bg-gray-300"></div>
-                  </div>
-                  <input
-                    type="tel"
-                    placeholder="712 345 678"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-20 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none text-gray-900 font-medium text-lg transition-all"
-                    maxLength={10}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-2">You'll receive an STK push on this number</p>
-              </div>
-
-              <div className="flex gap-3">
-                <Button onClick={onClose} variant="outline" className="flex-1 border-2 border-gray-200 hover:bg-gray-50 font-semibold h-12">
-                  Cancel
-                </Button>
-                <Button onClick={handlePayment} disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold h-12">
-                  {loading ? "Processing..." : "Pay Now"}
-                </Button>
-              </div>
-            </>
-          )}
-
-          {(status === "processing" || status === "checking") && (
-            <div className="text-center py-8">
-              <Loader2 className="w-16 h-16 mx-auto text-blue-600 animate-spin mb-6" />
-              <p className="font-bold text-2xl text-gray-900 mb-2">
-                {status === "processing" ? "Check Your Phone" : "Confirming Payment"}
-              </p>
-              <p className="text-gray-600">
-                {status === "processing" ? "Enter your M-Pesa PIN to complete payment" : "Verifying your transaction..."}
-              </p>
-            </div>
-          )}
-
-          {status === "success" && (
-            <div className="text-center py-8">
-              <div className="w-24 h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
-                <CheckCircle2 className="w-12 h-12 text-green-600" />
-              </div>
-              <p className="font-bold text-2xl text-green-700 mb-2">Success!</p>
-              <p className="text-gray-700 font-medium">
-                {paymentInfo.files.length > 1 ? "Your files are downloading now" : "Your file is downloading now"}
-              </p>
-            </div>
-          )}
-
-          {status === "error" && (
-            <div className="text-center py-8">
-              <p className="font-bold text-2xl text-red-700 mb-2">Payment Failed</p>
-              <p className="text-gray-600 mb-6">The transaction could not be processed</p>
-              <div className="flex gap-3">
-                <Button onClick={onClose} variant="outline" className="flex-1 border-2 border-gray-300 hover:bg-gray-50 font-semibold h-11">
-                  Close
-                </Button>
-                <Button
-                  onClick={() => {
-                    setStatus("idle")
-                    setLoading(false)
-                  }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold h-11"
-                >
-                  Try Again
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-    </div>
-  )
-}
+              <div className="grid md:grid-cols-2
