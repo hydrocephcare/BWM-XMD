@@ -131,24 +131,25 @@ export function ProjectsContent() {
   return (
     <>
       <main className="flex-1 bg-gray-50">
-        <div className="container mx-auto px-4 py-16">
+        <div className="container mx-auto px-4 py-8 md:py-12">
           {/* Header Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
               KCSE Computer Studies Projects
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Choose what you need: Documentation only, Database only, or the Complete Package
+            <p className="text-base text-gray-600">
+              Browse and download projects by batch
             </p>
           </div>
 
           {/* Batch Filter */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {batches.map((batch) => (
               <Button
                 key={batch}
                 onClick={() => setSelectedBatch(batch)}
                 variant={selectedBatch === batch ? "default" : "outline"}
+                size="sm"
                 className={selectedBatch === batch ? "bg-blue-600 hover:bg-blue-700" : "hover:bg-gray-100"}
               >
                 {batch === "all" ? "All Batches" : batch}
@@ -156,8 +157,103 @@ export function ProjectsContent() {
             ))}
           </div>
 
-          {/* Projects by Batch */}
-          <div className="space-y-12">
+          {/* Projects Table - Desktop */}
+          <div className="hidden md:block bg-white rounded-lg shadow-md overflow-hidden mb-8">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-100 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Batch</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Project Name</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Documentation</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Database</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Complete Package</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredBatches.map((batchName) => {
+                    const batchFiles = batchedProjects[batchName]
+                    const hasDoc = !!batchFiles.documentation
+                    const hasDb = !!batchFiles.database
+                    const hasBoth = hasDoc && hasDb
+
+                    return (
+                      <tr key={batchName} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                            {batchName}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {batchFiles.documentation?.file_name || batchFiles.database?.file_name || "Project"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {hasDoc ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <span className="text-sm font-bold text-blue-600">KES {batchFiles.documentation?.price}</span>
+                              <Button
+                                onClick={() => handleDownload("documentation", batchFiles)}
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 h-7"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Download
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {hasDb ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <span className="text-sm font-bold text-purple-600">KES {batchFiles.database?.price}</span>
+                              <Button
+                                onClick={() => handleDownload("database", batchFiles)}
+                                size="sm"
+                                className="bg-purple-600 hover:bg-purple-700 text-xs px-3 py-1 h-7"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Download
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {hasBoth ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm font-bold text-green-600">
+                                  KES {(batchFiles.documentation?.price || 0) + (batchFiles.database?.price || 0)}
+                                </span>
+                              </div>
+                              <Button
+                                onClick={() => handleDownload("both", batchFiles)}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-xs px-3 py-1 h-7"
+                              >
+                                <ShoppingCart className="w-3 h-3 mr-1" />
+                                Buy Both
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Projects Cards - Mobile */}
+          <div className="md:hidden space-y-4 mb-8">
             {filteredBatches.map((batchName) => {
               const batchFiles = batchedProjects[batchName]
               const hasDoc = !!batchFiles.documentation
@@ -165,250 +261,127 @@ export function ProjectsContent() {
               const hasBoth = hasDoc && hasDb
 
               return (
-                <div key={batchName}>
-                  {/* Batch Header */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="h-1 w-16 bg-blue-500 rounded"></div>
-                    <h2 className="text-3xl font-bold text-gray-900">{batchName}</h2>
-                    <div className="h-1 flex-1 bg-gray-200 rounded"></div>
-                  </div>
+                <Card key={batchName} className="bg-white shadow-md overflow-hidden">
+                  <div className="p-4">
+                    {/* Batch Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                        {batchName}
+                      </span>
+                    </div>
 
-                  {/* Pricing Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Documentation Card */}
-                    {hasDoc && (
-                      <Card className="bg-white shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200">
-                        <div className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                              Documentation
-                            </span>
-                            <span className="text-2xl font-bold text-blue-600">
-                              KES {batchFiles.documentation?.price}
-                            </span>
-                          </div>
-                          
-                          <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            {batchFiles.documentation?.file_name}
-                          </h3>
+                    {/* Project Name */}
+                    <h3 className="font-semibold text-gray-900 text-base mb-4">
+                      {batchFiles.documentation?.file_name || batchFiles.database?.file_name || "Project"}
+                    </h3>
 
-                          <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="bg-blue-100 p-2 rounded-lg">
-                                <FileText className="w-5 h-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900">Word Document</p>
-                                <p className="text-xs text-gray-600">Complete documentation</p>
-                              </div>
+                    {/* Download Options */}
+                    <div className="space-y-2">
+                      {hasDoc && (
+                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-blue-600" />
+                            <div>
+                              <p className="text-xs font-medium text-gray-700">Documentation</p>
+                              <p className="text-sm font-bold text-blue-600">KES {batchFiles.documentation?.price}</p>
                             </div>
                           </div>
-
-                          <div className="space-y-2 mb-6">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>System design & flowcharts</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>Problem statement</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>KCSE standard format</span>
-                            </div>
-                          </div>
-
                           <Button
                             onClick={() => handleDownload("documentation", batchFiles)}
-                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-xs px-3 h-8"
                           >
-                            <Download className="w-4 h-4 mr-2" />
-                            Download Documentation
+                            <Download className="w-3 h-3 mr-1" />
+                            Get
                           </Button>
                         </div>
-                      </Card>
-                    )}
+                      )}
 
-                    {/* Database Card */}
-                    {hasDb && (
-                      <Card className="bg-white shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200">
-                        <div className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
-                              Database
-                            </span>
-                            <span className="text-2xl font-bold text-purple-600">
-                              KES {batchFiles.database?.price}
-                            </span>
-                          </div>
-                          
-                          <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            {batchFiles.database?.file_name}
-                          </h3>
-
-                          <div className="bg-purple-50 p-4 rounded-lg mb-6">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="bg-purple-100 p-2 rounded-lg">
-                                <Database className="w-5 h-5 text-purple-600" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900">Access Database</p>
-                                <p className="text-xs text-gray-600">Complete database system</p>
-                              </div>
+                      {hasDb && (
+                        <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Database className="w-4 h-4 text-purple-600" />
+                            <div>
+                              <p className="text-xs font-medium text-gray-700">Database</p>
+                              <p className="text-sm font-bold text-purple-600">KES {batchFiles.database?.price}</p>
                             </div>
                           </div>
-
-                          <div className="space-y-2 mb-6">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>Customized forms & reports</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>Data/table modeling</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>Query processing</span>
-                            </div>
-                          </div>
-
                           <Button
                             onClick={() => handleDownload("database", batchFiles)}
-                            className="w-full bg-purple-600 hover:bg-purple-700"
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700 text-xs px-3 h-8"
                           >
-                            <Download className="w-4 h-4 mr-2" />
-                            Download Database
+                            <Download className="w-3 h-3 mr-1" />
+                            Get
                           </Button>
                         </div>
-                      </Card>
-                    )}
+                      )}
 
-                    {/* Complete Package Card */}
-                    {hasBoth && (
-                      <Card className="bg-white shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-green-500">
-                        <div className="bg-green-500 text-white py-2 text-center text-sm font-semibold">
-                          BEST VALUE
-                        </div>
-                        <div className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                              Complete Package
-                            </span>
-                            <span className="text-2xl font-bold text-green-600">
-                              KES {(batchFiles.documentation?.price || 0) + (batchFiles.database?.price || 0)}
-                            </span>
-                          </div>
-                          
-                          <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            Full Project Package
-                          </h3>
-
-                          <div className="bg-green-50 p-4 rounded-lg mb-6">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="bg-green-100 p-2 rounded-lg">
-                                <div className="flex">
-                                  <FileText className="w-4 h-4 text-green-600" />
-                                  <Database className="w-4 h-4 text-green-600 -ml-1" />
-                                </div>
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900">Both Files Included</p>
-                                <p className="text-xs text-gray-600">Documentation + Database</p>
-                              </div>
+                      {hasBoth && (
+                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-2 border-green-200">
+                          <div className="flex items-center gap-2">
+                            <div className="flex">
+                              <FileText className="w-3 h-3 text-green-600" />
+                              <Database className="w-3 h-3 text-green-600 -ml-1" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-700">Complete Package</p>
+                              <p className="text-sm font-bold text-green-600">
+                                KES {(batchFiles.documentation?.price || 0) + (batchFiles.database?.price || 0)}
+                              </p>
                             </div>
                           </div>
-
-                          <div className="space-y-2 mb-6">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>Complete documentation</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>Full database system</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              <span>WhatsApp support included</span>
-                            </div>
-                          </div>
-
                           <Button
                             onClick={() => handleDownload("both", batchFiles)}
-                            className="w-full bg-green-600 hover:bg-green-700"
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-xs px-3 h-8"
                           >
-                            <ShoppingCart className="w-4 h-4 mr-2" />
-                            Purchase Complete Package
+                            <ShoppingCart className="w-3 h-3 mr-1" />
+                            Buy
                           </Button>
                         </div>
-                      </Card>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Card>
               )
             })}
           </div>
 
           {/* Info Section */}
-          <div className="mt-16 max-w-4xl mx-auto">
-            <Card className="bg-white shadow-lg p-8 border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">What You Get</h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <FileText className="w-6 h-6 text-blue-600" />
-                    </div>
-                  </div>
+          <div className="max-w-4xl mx-auto">
+            <Card className="bg-white shadow-md p-6 border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">What's Included</h2>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div className="flex gap-3">
+                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Complete Documentation</h3>
-                    <p className="text-sm text-gray-600">
-                      Professional Word documents with all project details, system analysis, design, and implementation
-                    </p>
+                    <h3 className="font-semibold text-gray-900 mb-1">Documentation</h3>
+                    <p className="text-gray-600">Complete Word documents with system analysis & design</p>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="bg-purple-50 p-3 rounded-lg">
-                      <Database className="w-6 h-6 text-purple-600" />
-                    </div>
-                  </div>
+                <div className="flex gap-3">
+                  <Database className="w-5 h-5 text-purple-600 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Working Database</h3>
-                    <p className="text-sm text-gray-600">
-                      Fully functional Microsoft Access database with tables, forms, queries, and reports
-                    </p>
+                    <h3 className="font-semibold text-gray-900 mb-1">Database</h3>
+                    <p className="text-gray-600">Functional Access database with forms & reports</p>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <CheckCircle2 className="w-6 h-6 text-green-600" />
-                    </div>
-                  </div>
+                <div className="flex gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">KCSE Ready</h3>
-                    <p className="text-sm text-gray-600">
-                      All projects meet KCSE Computer Studies examination requirements and standards
-                    </p>
+                    <p className="text-gray-600">Meets all examination requirements</p>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <Download className="w-6 h-6 text-blue-600" />
-                    </div>
-                  </div>
+                <div className="flex gap-3">
+                  <Download className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Instant Access</h3>
-                    <p className="text-sm text-gray-600">
-                      Download immediately after payment via M-Pesa. No waiting required
-                    </p>
+                    <p className="text-gray-600">Download immediately after M-Pesa payment</p>
                   </div>
                 </div>
               </div>
