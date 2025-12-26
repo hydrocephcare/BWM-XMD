@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Upload, Trash2, FileText, Database, LinkIcon, X, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
+import { Upload, Trash2, FileText, Database, LinkIcon, X, Loader2, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase"
 
@@ -18,8 +18,8 @@ interface ProjectFile {
   price: number
   is_external_link: boolean
   documentation_url?: string
-  has_documentation: boolean
-  has_database: boolean
+  has_documentation?: boolean
+  has_database?: boolean
 }
 
 export default function AdminProjectsPage() {
@@ -40,6 +40,7 @@ export default function AdminProjectsPage() {
     dbExternalLink: "",
   })
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState("")
 
   useEffect(() => {
     loadProjects()
@@ -67,9 +68,10 @@ export default function AdminProjectsPage() {
 
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault()
+    setUploadError("")
 
     if (!uploadForm.name || !uploadForm.batch) {
-      alert("Please fill in all required fields")
+      setUploadError("Please fill in all required fields")
       return
     }
 
@@ -79,7 +81,7 @@ export default function AdminProjectsPage() {
     const hasDb = uploadForm.dbUploadMethod === "file" ? !!uploadForm.dbFile : !!uploadForm.dbExternalLink
 
     if (!hasDoc || !hasDb) {
-      alert("Please provide both Documentation (Word) and Database (Access) files")
+      setUploadError("Please provide both Documentation (Word) and Database (Access) files")
       return
     }
 
@@ -89,45 +91,68 @@ export default function AdminProjectsPage() {
       let docUrl = ""
       let dbUrl = ""
 
+      console.log("Starting upload process...")
+
       // Upload Documentation
       if (uploadForm.docUploadMethod === "file" && uploadForm.docFile) {
+        console.log("Uploading documentation file...")
         const formData = new FormData()
         formData.append("file", uploadForm.docFile)
+        
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Documentation upload failed: ${errorText}`)
+        }
+        
         const data = await response.json()
-        if (!data.url) throw new Error("Documentation upload failed")
+        if (!data.url) throw new Error("Documentation upload failed - no URL returned")
         docUrl = data.url
+        console.log("Documentation uploaded:", docUrl)
       } else {
         docUrl = uploadForm.docExternalLink
+        console.log("Using documentation external link:", docUrl)
       }
 
       // Upload Database
       if (uploadForm.dbUploadMethod === "file" && uploadForm.dbFile) {
+        console.log("Uploading database file...")
         const formData = new FormData()
         formData.append("file", uploadForm.dbFile)
+        
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Database upload failed: ${errorText}`)
+        }
+        
         const data = await response.json()
-        if (!data.url) throw new Error("Database upload failed")
+        if (!data.url) throw new Error("Database upload failed - no URL returned")
         dbUrl = data.url
+        console.log("Database uploaded:", dbUrl)
       } else {
         dbUrl = uploadForm.dbExternalLink
+        console.log("Using database external link:", dbUrl)
       }
 
       // Insert into Supabase
+      console.log("Saving to database...")
       const supabase = createClient()
-      const { error: insertError } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from("projects")
         .insert([
           {
             batch_name: uploadForm.batch,
             file_name: uploadForm.name,
-            file_type: "Access", // Database file type
+            file_type: "Access",
             price: uploadForm.price,
             file_url: dbUrl,
             documentation_url: docUrl,
@@ -136,8 +161,14 @@ export default function AdminProjectsPage() {
             has_database: true,
           },
         ])
+        .select()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error("Database insert error:", insertError)
+        throw new Error(`Database error: ${insertError.message}`)
+      }
+
+      console.log("Project saved successfully:", insertedData)
 
       await loadProjects()
       setUploadForm({
@@ -154,7 +185,8 @@ export default function AdminProjectsPage() {
       setShowUpload(false)
       alert("Project added successfully!")
     } catch (error) {
-      alert("Upload failed. Please try again.")
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+      setUploadError(`Upload failed: ${errorMessage}`)
       console.error("Upload error:", error)
     } finally {
       setUploading(false)
@@ -226,6 +258,13 @@ export default function AdminProjectsPage() {
               </Button>
             </div>
 
+            {uploadError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <p className="font-medium">Error:</p>
+                <p className="text-sm">{uploadError}</p>
+              </div>
+            )}
+
             <form onSubmit={handleFileUpload} className="space-y-6">
               {/* Basic Info */}
               <div className="bg-gray-50 p-6 rounded-xl space-y-4">
@@ -240,6 +279,7 @@ export default function AdminProjectsPage() {
                     required
                     className="bg-white"
                   />
+                  <p className="text-xs text-gray-500 mt-1">This name will be used for both documentation and database files</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -440,18 +480,24 @@ export default function AdminProjectsPage() {
                             <h3 className="font-bold text-xl text-gray-900 mb-3">{file.file_name}</h3>
                             
                             <div className="flex flex-wrap gap-2 mb-3">
-                              <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-                                <FileText className="w-3 h-3" />
-                                Documentation
-                              </span>
-                              <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
-                                <Database className="w-3 h-3" />
-                                Database
-                              </span>
-                              <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Complete Project
-                              </span>
+                              {file.documentation_url && (
+                                <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                                  <FileText className="w-3 h-3" />
+                                  Documentation
+                                </span>
+                              )}
+                              {file.file_url && (
+                                <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
+                                  <Database className="w-3 h-3" />
+                                  Database
+                                </span>
+                              )}
+                              {file.documentation_url && file.file_url && (
+                                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Complete
+                                </span>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-4">
