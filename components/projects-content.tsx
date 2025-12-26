@@ -650,4 +650,161 @@ function PaymentModal({ paymentInfo, onClose }: { paymentInfo: PaymentInfo; onCl
 
   const checkPaymentStatus = async (reference: string) => {
     const maxAttempts = 30
-    let attempts
+    let attempts = 0
+
+    const checkInterval = setInterval(async () => {
+      attempts++
+
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase.from("payments").select("*").eq("transaction_id", reference).single()
+
+        if (!error && data && data.payment_status === "completed") {
+          clearInterval(checkInterval)
+          setStatus("success")
+          setLoading(false)
+
+          setTimeout(() => {
+            paymentInfo.files.forEach((file, index) => {
+              setTimeout(() => {
+                window.open(file.file_url, "_blank")
+              }, index * 500)
+            })
+
+            setTimeout(() => {
+              onClose()
+            }, paymentInfo.files.length * 500 + 1000)
+          }, 2000)
+          return
+        }
+      } catch (error) {
+        console.error("Error checking payment:", error)
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(checkInterval)
+        setStatus("error")
+        setLoading(false)
+      }
+    }, 2000)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <Card className="w-full max-w-md shadow-2xl bg-white">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Complete Payment</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {status === "idle" && (
+            <>
+              <div className="mb-6 p-5 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Package</p>
+                    <p className="font-semibold text-gray-900 text-lg">{paymentInfo.packageType}</p>
+                  </div>
+                </div>
+
+                {paymentInfo.files.length > 1 && (
+                  <div className="space-y-2 mb-4 bg-white/60 rounded-lg p-3">
+                    {paymentInfo.files.map((file, idx) => (
+                      <div key={idx} className="flex items-center text-sm text-gray-700">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                        {file.file_name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-baseline justify-between pt-4 border-t border-blue-200">
+                  <span className="text-sm font-medium text-gray-600">Total Amount</span>
+                  <div className="text-3xl font-bold text-gray-900">KES {paymentInfo.totalAmount}</div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold mb-3 text-gray-900">
+                  M-Pesa Phone Number
+                </label>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                    <span className="text-gray-400 font-medium">+254</span>
+                    <div className="w-px h-6 bg-gray-300"></div>
+                  </div>
+                  <input
+                    type="tel"
+                    placeholder="712 345 678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full pl-20 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none text-gray-900 font-medium text-lg transition-all"
+                    maxLength={10}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">You'll receive an STK push on this number</p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button onClick={onClose} variant="outline" className="flex-1 border-2 border-gray-200 hover:bg-gray-50 font-semibold h-12">
+                  Cancel
+                </Button>
+                <Button onClick={handlePayment} disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold h-12">
+                  {loading ? "Processing..." : "Pay Now"}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {(status === "processing" || status === "checking") && (
+            <div className="text-center py-8">
+              <Loader2 className="w-16 h-16 mx-auto text-blue-600 animate-spin mb-6" />
+              <p className="font-bold text-2xl text-gray-900 mb-2">
+                {status === "processing" ? "Check Your Phone" : "Confirming Payment"}
+              </p>
+              <p className="text-gray-600">
+                {status === "processing" ? "Enter your M-Pesa PIN to complete payment" : "Verifying your transaction..."}
+              </p>
+            </div>
+          )}
+
+          {status === "success" && (
+            <div className="text-center py-8">
+              <div className="w-24 h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <CheckCircle2 className="w-12 h-12 text-green-600" />
+              </div>
+              <p className="font-bold text-2xl text-green-700 mb-2">Success!</p>
+              <p className="text-gray-700 font-medium">
+                {paymentInfo.files.length > 1 ? "Your files are downloading now" : "Your file is downloading now"}
+              </p>
+            </div>
+          )}
+
+          {status === "error" && (
+            <div className="text-center py-8">
+              <p className="font-bold text-2xl text-red-700 mb-2">Payment Failed</p>
+              <p className="text-gray-600 mb-6">The transaction could not be processed</p>
+              <div className="flex gap-3">
+                <Button onClick={onClose} variant="outline" className="flex-1 border-2 border-gray-300 hover:bg-gray-50 font-semibold h-11">
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    setStatus("idle")
+                    setLoading(false)
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold h-11"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
+  )
+}
