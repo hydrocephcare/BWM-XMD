@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Upload, Trash2, FileText, Database, Link as LinkIcon, X, Loader2, CheckCircle2, Plus, Edit } from "lucide-react"
+import { Upload, Trash2, FileText, Database, Link as LinkIcon, X, Loader2, CheckCircle2, Plus, Edit, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase"
 
@@ -17,6 +17,9 @@ interface ProjectFile {
   file_url: string
   price: number
   is_external_link: boolean
+  image_url_1?: string
+  image_url_2?: string
+  image_url_3?: string
 }
 
 export default function AdminProjectsPage() {
@@ -32,11 +35,17 @@ export default function AdminProjectsPage() {
     docUploadMethod: "link" as "file" | "link",
     docFile: null as File | null,
     docExternalLink: "",
+    docImage1: null as File | null,
+    docImage2: null as File | null,
+    docImage3: null as File | null,
     dbName: "",
     dbPrice: 500,
     dbUploadMethod: "link" as "file" | "link",
     dbFile: null as File | null,
     dbExternalLink: "",
+    dbImage1: null as File | null,
+    dbImage2: null as File | null,
+    dbImage3: null as File | null,
   })
   
   const [uploading, setUploading] = useState(false)
@@ -83,6 +92,30 @@ export default function AdminProjectsPage() {
     setNewBatchName("")
   }
 
+  const uploadImageToSupabase = async (file: File): Promise<string> => {
+    const supabase = createClient()
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+    const filePath = `project-images/${fileName}`
+
+    const { data, error } = await supabase.storage
+      .from('project-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      throw new Error(`Image upload failed: ${error.message}`)
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('project-images')
+      .getPublicUrl(filePath)
+
+    return urlData.publicUrl
+  }
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault()
     setUploadError("")
@@ -105,6 +138,7 @@ export default function AdminProjectsPage() {
     try {
       const filesToInsert: any[] = []
 
+      // Documentation
       if (hasDoc) {
         let docUrl = ""
         if (uploadForm.docUploadMethod === "file" && uploadForm.docFile) {
@@ -118,6 +152,21 @@ export default function AdminProjectsPage() {
           docUrl = uploadForm.docExternalLink
         }
 
+        // Upload documentation images
+        let docImage1Url = ""
+        let docImage2Url = ""
+        let docImage3Url = ""
+
+        if (uploadForm.docImage1) {
+          docImage1Url = await uploadImageToSupabase(uploadForm.docImage1)
+        }
+        if (uploadForm.docImage2) {
+          docImage2Url = await uploadImageToSupabase(uploadForm.docImage2)
+        }
+        if (uploadForm.docImage3) {
+          docImage3Url = await uploadImageToSupabase(uploadForm.docImage3)
+        }
+
         filesToInsert.push({
           batch_name: selectedBatch,
           file_name: uploadForm.projectName,
@@ -125,9 +174,13 @@ export default function AdminProjectsPage() {
           price: uploadForm.docPrice,
           file_url: docUrl,
           is_external_link: uploadForm.docUploadMethod === "link",
+          image_url_1: docImage1Url || null,
+          image_url_2: docImage2Url || null,
+          image_url_3: docImage3Url || null,
         })
       }
 
+      // Database
       if (hasDb) {
         let dbUrl = ""
         if (uploadForm.dbUploadMethod === "file" && uploadForm.dbFile) {
@@ -143,6 +196,21 @@ export default function AdminProjectsPage() {
 
         const dbFileName = uploadForm.dbName.trim() || uploadForm.projectName
 
+        // Upload database images
+        let dbImage1Url = ""
+        let dbImage2Url = ""
+        let dbImage3Url = ""
+
+        if (uploadForm.dbImage1) {
+          dbImage1Url = await uploadImageToSupabase(uploadForm.dbImage1)
+        }
+        if (uploadForm.dbImage2) {
+          dbImage2Url = await uploadImageToSupabase(uploadForm.dbImage2)
+        }
+        if (uploadForm.dbImage3) {
+          dbImage3Url = await uploadImageToSupabase(uploadForm.dbImage3)
+        }
+
         filesToInsert.push({
           batch_name: selectedBatch,
           file_name: dbFileName,
@@ -150,6 +218,9 @@ export default function AdminProjectsPage() {
           price: uploadForm.dbPrice,
           file_url: dbUrl,
           is_external_link: uploadForm.dbUploadMethod === "link",
+          image_url_1: dbImage1Url || null,
+          image_url_2: dbImage2Url || null,
+          image_url_3: dbImage3Url || null,
         })
       }
 
@@ -165,11 +236,17 @@ export default function AdminProjectsPage() {
         docUploadMethod: "link",
         docFile: null,
         docExternalLink: "",
+        docImage1: null,
+        docImage2: null,
+        docImage3: null,
         dbName: "",
         dbPrice: 500,
         dbUploadMethod: "link",
         dbFile: null,
         dbExternalLink: "",
+        dbImage1: null,
+        dbImage2: null,
+        dbImage3: null,
       })
       alert("Project files added successfully!")
     } catch (error) {
@@ -304,6 +381,7 @@ export default function AdminProjectsPage() {
                 <p className="text-xs text-gray-500 mt-1">Main project name (used for documentation)</p>
               </div>
 
+              {/* DOCUMENTATION SECTION */}
               <div className="bg-blue-50 p-6 rounded-xl space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -361,8 +439,49 @@ export default function AdminProjectsPage() {
                     className="bg-white"
                   />
                 )}
+
+                {/* Documentation Images */}
+                <div className="mt-4 p-4 bg-white rounded-lg border-2 border-blue-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ImageIcon className="w-4 h-4 text-blue-600" />
+                    <h4 className="font-semibold text-sm">Sample Images (Optional)</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-2">Image 1</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setUploadForm({ ...uploadForm, docImage1: e.target.files?.[0] || null })}
+                        className="w-full px-2 py-1.5 border rounded text-xs bg-white"
+                      />
+                      {uploadForm.docImage1 && <p className="text-xs text-green-600 mt-1">✓ Selected</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-2">Image 2</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setUploadForm({ ...uploadForm, docImage2: e.target.files?.[0] || null })}
+                        className="w-full px-2 py-1.5 border rounded text-xs bg-white"
+                      />
+                      {uploadForm.docImage2 && <p className="text-xs text-green-600 mt-1">✓ Selected</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-2">Image 3</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setUploadForm({ ...uploadForm, docImage3: e.target.files?.[0] || null })}
+                        className="w-full px-2 py-1.5 border rounded text-xs bg-white"
+                      />
+                      {uploadForm.docImage3 && <p className="text-xs text-green-600 mt-1">✓ Selected</p>}
+                    </div>
+                  </div>
+                </div>
               </div>
 
+              {/* DATABASE SECTION */}
               <div className="bg-purple-50 p-6 rounded-xl space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -431,20 +550,60 @@ export default function AdminProjectsPage() {
                     className="bg-white"
                   />
                 )}
+
+                {/* Database Images */}
+                <div className="mt-4 p-4 bg-white rounded-lg border-2 border-purple-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ImageIcon className="w-4 h-4 text-purple-600" />
+                    <h4 className="font-semibold text-sm">Sample Images (Optional)</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-2">Image 1</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setUploadForm({ ...uploadForm, dbImage1: e.target.files?.[0] || null })}
+                        className="w-full px-2 py-1.5 border rounded text-xs bg-white"
+                      />
+                      {uploadForm.dbImage1 && <p className="text-xs text-green-600 mt-1">✓ Selected</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-2">Image 2</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setUploadForm({ ...uploadForm, dbImage2: e.target.files?.[0] || null })}
+                        className="w-full px-2 py-1.5 border rounded text-xs bg-white"
+                      />
+                      {uploadForm.dbImage2 && <p className="text-xs text-green-600 mt-1">✓ Selected</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-2">Image 3</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setUploadForm({ ...uploadForm, dbImage3: e.target.files?.[0] || null })}
+                        className="w-full px-2 py-1.5 border rounded text-xs bg-white"
+                      />
+                      {uploadForm.dbImage3 && <p className="text-xs text-green-600 mt-1">✓ Selected</p>}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <Button 
                 onClick={handleFileUpload}
                 disabled={uploading} 
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold"
               >
                 {uploading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Uploading Files & Images...
                   </>
                 ) : (
-                  "Add Files"
+                  "Add Project Files"
                 )}
               </Button>
             </div>
@@ -464,11 +623,18 @@ export default function AdminProjectsPage() {
                 <div className="grid gap-4">
                   {docFiles.map((file) => (
                     <Card key={file.id} className="p-4 border-l-4 border-blue-500">
-                      <div className="flex justify-between items-center">
-                        <div>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
                           <h4 className="font-bold text-gray-900">{file.file_name}</h4>
                           <p className="text-sm text-gray-600">Type: Documentation (Word)</p>
                           <p className="text-lg font-bold text-blue-600 mt-1">KES {file.price}</p>
+                          {(file.image_url_1 || file.image_url_2 || file.image_url_3) && (
+                            <div className="flex gap-2 mt-2">
+                              {file.image_url_1 && <img src={file.image_url_1} alt="Preview 1" className="w-16 h-16 object-cover rounded border" />}
+                              {file.image_url_2 && <img src={file.image_url_2} alt="Preview 2" className="w-16 h-16 object-cover rounded border" />}
+                              {file.image_url_3 && <img src={file.image_url_3} alt="Preview 3" className="w-16 h-16 object-cover rounded border" />}
+                            </div>
+                          )}
                         </div>
                         <Button 
                           variant="destructive" 
@@ -493,36 +659,18 @@ export default function AdminProjectsPage() {
                 <div className="grid gap-4">
                   {dbFiles.map((file) => (
                     <Card key={file.id} className="p-4 border-l-4 border-purple-500">
-                      <div className="flex justify-between items-center">
-                        <div>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
                           <h4 className="font-bold text-gray-900">{file.file_name}</h4>
                           <p className="text-sm text-gray-600">Type: Database (Access)</p>
                           <p className="text-lg font-bold text-purple-600 mt-1">KES {file.price}</p>
+                          {(file.image_url_1 || file.image_url_2 || file.image_url_3) && (
+                            <div className="flex gap-2 mt-2">
+                              {file.image_url_1 && <img src={file.image_url_1} alt="Preview 1" className="w-16 h-16 object-cover rounded border" />}
+                              {file.image_url_2 && <img src={file.image_url_2} alt="Preview 2" className="w-16 h-16 object-cover rounded border" />}
+                              {file.image_url_3 && <img src={file.image_url_3} alt="Preview 3" className="w-16 h-16 object-cover rounded border" />}
+                            </div>
+                          )}
                         </div>
                         <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => deleteFile(file.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {selectedBatch && selectedBatchProjects.length === 0 && (
-          <Card className="p-12 text-center bg-white shadow-md">
-            <Upload className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No files in {selectedBatch} yet</p>
-            <p className="text-gray-400 text-sm mt-2">Use the form above to add files</p>
-          </Card>
-        )}
-      </div>
-    </div>
-  )
-}
+                          variant
