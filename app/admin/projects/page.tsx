@@ -93,27 +93,53 @@ export default function AdminProjectsPage() {
   }
 
   const uploadImageToSupabase = async (file: File): Promise<string> => {
-    const supabase = createClient()
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
-    const filePath = `project-images/${fileName}`
+    try {
+      const supabase = createClient()
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+      const filePath = `${fileName}`
 
-    const { data, error } = await supabase.storage
-      .from('project-images')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      })
+      // Check if bucket exists
+      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
+      
+      if (bucketError) {
+        console.error('Bucket check error:', bucketError)
+        throw new Error('Cannot access storage buckets. Please check Supabase setup.')
+      }
 
-    if (error) {
-      throw new Error(`Image upload failed: ${error.message}`)
+      const bucketExists = buckets?.some(b => b.name === 'project-images')
+      
+      if (!bucketExists) {
+        throw new Error('Storage bucket "project-images" does not exist. Please create it in Supabase Dashboard → Storage → Create bucket → Name: "project-images" → Make it PUBLIC')
+      }
+
+      // Upload the file
+      const { data, error } = await supabase.storage
+        .from('project-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (error) {
+        console.error('Upload error:', error)
+        throw new Error(`Image upload failed: ${error.message}. Make sure the bucket is PUBLIC and has proper policies.`)
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('project-images')
+        .getPublicUrl(filePath)
+
+      if (!urlData?.publicUrl) {
+        throw new Error('Failed to get public URL for uploaded image')
+      }
+
+      return urlData.publicUrl
+    } catch (err) {
+      console.error('Image upload error:', err)
+      throw err
     }
-
-    const { data: urlData } = supabase.storage
-      .from('project-images')
-      .getPublicUrl(filePath)
-
-    return urlData.publicUrl
   }
 
   const handleFileUpload = async (e: React.FormEvent) => {
@@ -638,6 +664,31 @@ export default function AdminProjectsPage() {
                         </div>
                         <Button 
                           variant="destructive" 
+                          size="sm"
+                          onClick={() => deleteFile(file.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {selectedBatch && selectedBatchProjects.length === 0 && (
+          <Card className="p-12 text-center bg-white shadow-md">
+            <Upload className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">No files in {selectedBatch} yet</p>
+            <p className="text-gray-400 text-sm mt-2">Use the form above to add files</p>
+          </Card>
+        )}
+      </div>
+    </div>
+  )
+}="destructive" 
                           size="sm"
                           onClick={() => deleteFile(file.id)}
                         >
