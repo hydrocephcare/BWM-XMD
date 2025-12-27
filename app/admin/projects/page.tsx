@@ -183,14 +183,40 @@ export default function AdminProjectsPage() {
         let docImage2Url = ""
         let docImage3Url = ""
 
+        console.log("Starting documentation image uploads...")
+
         if (uploadForm.docImage1) {
-          docImage1Url = await uploadImageToSupabase(uploadForm.docImage1)
+          console.log("Uploading doc image 1:", uploadForm.docImage1.name)
+          try {
+            docImage1Url = await uploadImageToSupabase(uploadForm.docImage1)
+            console.log("Doc image 1 uploaded:", docImage1Url)
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            console.error("Doc image 1 upload failed:", errorMsg)
+            throw new Error(`Documentation Image 1 upload failed: ${errorMsg}`)
+          }
         }
         if (uploadForm.docImage2) {
-          docImage2Url = await uploadImageToSupabase(uploadForm.docImage2)
+          console.log("Uploading doc image 2:", uploadForm.docImage2.name)
+          try {
+            docImage2Url = await uploadImageToSupabase(uploadForm.docImage2)
+            console.log("Doc image 2 uploaded:", docImage2Url)
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            console.error("Doc image 2 upload failed:", errorMsg)
+            throw new Error(`Documentation Image 2 upload failed: ${errorMsg}`)
+          }
         }
         if (uploadForm.docImage3) {
-          docImage3Url = await uploadImageToSupabase(uploadForm.docImage3)
+          console.log("Uploading doc image 3:", uploadForm.docImage3.name)
+          try {
+            docImage3Url = await uploadImageToSupabase(uploadForm.docImage3)
+            console.log("Doc image 3 uploaded:", docImage3Url)
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            console.error("Doc image 3 upload failed:", errorMsg)
+            throw new Error(`Documentation Image 3 upload failed: ${errorMsg}`)
+          }
         }
 
         filesToInsert.push({
@@ -227,14 +253,40 @@ export default function AdminProjectsPage() {
         let dbImage2Url = ""
         let dbImage3Url = ""
 
+        console.log("Starting database image uploads...")
+
         if (uploadForm.dbImage1) {
-          dbImage1Url = await uploadImageToSupabase(uploadForm.dbImage1)
+          console.log("Uploading db image 1:", uploadForm.dbImage1.name)
+          try {
+            dbImage1Url = await uploadImageToSupabase(uploadForm.dbImage1)
+            console.log("DB image 1 uploaded:", dbImage1Url)
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            console.error("DB image 1 upload failed:", errorMsg)
+            throw new Error(`Database Image 1 upload failed: ${errorMsg}`)
+          }
         }
         if (uploadForm.dbImage2) {
-          dbImage2Url = await uploadImageToSupabase(uploadForm.dbImage2)
+          console.log("Uploading db image 2:", uploadForm.dbImage2.name)
+          try {
+            dbImage2Url = await uploadImageToSupabase(uploadForm.dbImage2)
+            console.log("DB image 2 uploaded:", dbImage2Url)
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            console.error("DB image 2 upload failed:", errorMsg)
+            throw new Error(`Database Image 2 upload failed: ${errorMsg}`)
+          }
         }
         if (uploadForm.dbImage3) {
-          dbImage3Url = await uploadImageToSupabase(uploadForm.dbImage3)
+          console.log("Uploading db image 3:", uploadForm.dbImage3.name)
+          try {
+            dbImage3Url = await uploadImageToSupabase(uploadForm.dbImage3)
+            console.log("DB image 3 uploaded:", dbImage3Url)
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            console.error("DB image 3 upload failed:", errorMsg)
+            throw new Error(`Database Image 3 upload failed: ${errorMsg}`)
+          }
         }
 
         filesToInsert.push({
@@ -249,6 +301,8 @@ export default function AdminProjectsPage() {
           image_url_3: dbImage3Url || null,
         })
       }
+
+      console.log("Inserting to database:", filesToInsert)
 
       const supabase = createClient()
       const { error: insertError } = await supabase.from("projects").insert(filesToInsert)
@@ -278,7 +332,7 @@ export default function AdminProjectsPage() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
       setUploadError(`Upload failed: ${errorMessage}`)
-      console.error("Upload error:", error)
+      console.error("Upload error details:", error)
     } finally {
       setUploading(false)
     }
@@ -675,31 +729,6 @@ export default function AdminProjectsPage() {
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {selectedBatch && selectedBatchProjects.length === 0 && (
-          <Card className="p-12 text-center bg-white shadow-md">
-            <Upload className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No files in {selectedBatch} yet</p>
-            <p className="text-gray-400 text-sm mt-2">Use the form above to add files</p>
-          </Card>
-        )}
-      </div>
-    </div>
-  )
-}="destructive" 
-                          size="sm"
-                          onClick={() => deleteFile(file.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {dbFiles.length > 0 && (
               <div>
@@ -724,4 +753,29 @@ export default function AdminProjectsPage() {
                           )}
                         </div>
                         <Button 
-                          variant
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => deleteFile(file.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {selectedBatch && selectedBatchProjects.length === 0 && (
+          <Card className="p-12 text-center bg-white shadow-md">
+            <Upload className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">No files in {selectedBatch} yet</p>
+            <p className="text-gray-400 text-sm mt-2">Use the form above to add files</p>
+          </Card>
+        )}
+      </div>
+    </div>
+  )
+}
